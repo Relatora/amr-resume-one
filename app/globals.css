@@ -39,8 +39,26 @@
   }
 }
 
+/* Light theme — toggled by adding .light to <html> */
+html.light {
+  --color-base: #f5f7fc;
+  --color-base-soft: #eceff7;
+  --color-card: #ffffff;
+  --color-line: #d7dfec;
+  --color-ink: #101828;
+  --color-ink-dim: #51607a;
+}
+
 html {
   scroll-behavior: smooth;
+}
+
+/* Theme-aware translucent fills (white/5-style veils don't work in light mode) */
+.veil {
+  background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+.hover-veil:hover {
+  background: color-mix(in oklab, var(--color-ink) 7%, transparent);
 }
 
 body {

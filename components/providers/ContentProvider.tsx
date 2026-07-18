@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { ResumeContent } from "@/lib/types";
+import { useEditor } from "@/components/providers/EditorProvider";
 
 const LOCAL_KEY = "resume-content-local";
 
@@ -26,6 +27,10 @@ interface ContentContextValue {
   update: (updater: (current: ResumeContent) => ResumeContent) => void;
   downloadJson: () => void;
   discardLocalOverride: () => void;
+  // demo mode: try-out edits that never persist
+  demoDirty: boolean;
+  startDemo: () => void;
+  resetDemo: () => void;
 }
 
 const ContentContext = createContext<ContentContextValue | null>(null);
@@ -37,10 +42,13 @@ export function ContentProvider({
   initial: ResumeContent;
   children: React.ReactNode;
 }) {
+  const { mode } = useEditor();
   const [content, setContent] = useState<ResumeContent>(initial);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
   const [hasLocalOverride, setHasLocalOverride] = useState(false);
+  const [demoDirty, setDemoDirty] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const demoBaseline = useRef<ResumeContent | null>(null);
 
   // Overlay any edits previously saved in this browser (production case,
   // where writes to content.json aren't possible).
@@ -97,12 +105,29 @@ export function ContentProvider({
     (updater: (current: ResumeContent) => ResumeContent) => {
       setContent((current) => {
         const next = updater(current);
-        persist(next);
+        if (mode === "demo") {
+          setDemoDirty(true);
+        } else {
+          persist(next);
+        }
         return next;
       });
     },
-    [persist]
+    [persist, mode]
   );
+
+  const startDemo = useCallback(() => {
+    setContent((current) => {
+      demoBaseline.current = current;
+      return current;
+    });
+    setDemoDirty(false);
+  }, []);
+
+  const resetDemo = useCallback(() => {
+    if (demoBaseline.current) setContent(demoBaseline.current);
+    setDemoDirty(false);
+  }, []);
 
   const downloadJson = useCallback(() => {
     const blob = new Blob([JSON.stringify(content, null, 2) + "\n"], {
@@ -132,6 +157,9 @@ export function ContentProvider({
         update,
         downloadJson,
         discardLocalOverride,
+        demoDirty,
+        startDemo,
+        resetDemo,
       }}
     >
       {children}

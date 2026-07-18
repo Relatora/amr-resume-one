@@ -58,7 +58,7 @@ function PanelShell({
           <button
             onClick={onClose}
             aria-label="Close editor"
-            className="cursor-pointer rounded-md border border-line px-2.5 py-1 text-sm text-ink-dim transition hover:bg-white/5"
+            className="cursor-pointer rounded-md border border-line px-2.5 py-1 text-sm text-ink-dim transition hover-veil"
           >
             ✕
           </button>
@@ -92,7 +92,7 @@ function SaveCancelRow({
         </button>
         <button
           onClick={onCancel}
-          className="cursor-pointer rounded-lg border border-line px-4 py-2 text-sm text-ink-dim transition hover:bg-white/5"
+          className="cursor-pointer rounded-lg border border-line px-4 py-2 text-sm text-ink-dim transition hover-veil"
         >
           Cancel
         </button>

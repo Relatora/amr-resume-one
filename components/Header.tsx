@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useAuth } from "@/components/providers/AuthProvider";
 import { useContent } from "@/components/providers/ContentProvider";
 import { useEditor } from "@/components/providers/EditorProvider";
+import { useTheme } from "@/lib/theme";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const NAV = [
   { href: "#experience", label: "Experience" },
@@ -43,7 +44,7 @@ function SaveBadge() {
           </button>
           <button
             onClick={discardLocalOverride}
-            className="cursor-pointer rounded-md border border-line px-2 py-1 text-ink-dim transition hover:bg-white/5"
+            className="hover-veil cursor-pointer rounded-md border border-line px-2 py-1 text-ink-dim transition"
             title="Discard edits stored in this browser"
           >
             Discard
@@ -54,9 +55,86 @@ function SaveBadge() {
   );
 }
 
+function ResetButton() {
+  const { resetDemo } = useContent();
+
+  return (
+    <span className="group relative">
+      <button
+        onClick={resetDemo}
+        className="cursor-pointer rounded-md border border-amber-400/50 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-400/20"
+      >
+        ↺ Reset
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute right-0 top-full z-50 mt-2 hidden w-52 rounded-lg border border-line bg-card px-3 py-2 text-xs leading-relaxed text-ink-dim shadow-xl group-hover:block"
+      >
+        This will reset the resume to its original form.
+      </span>
+    </span>
+  );
+}
+
+function EditControls() {
+  const { mode, setMode, setModal } = useEditor();
+  const { authed } = useAuth();
+  const { demoDirty, resetDemo } = useContent();
+
+  if (mode === "real") {
+    return (
+      <div className="flex items-center gap-2">
+        <SaveBadge />
+        <button
+          onClick={() => setMode("off")}
+          className="cursor-pointer rounded-md bg-gradient-to-r from-teal-400 to-violet-400 px-3 py-1.5 text-xs font-semibold text-base transition hover:opacity-90"
+        >
+          Done editing
+        </button>
+      </div>
+    );
+  }
+
+  if (mode === "demo") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="hidden rounded-full border border-violet-400/40 bg-violet-400/10 px-2.5 py-1 text-xs text-violet-300 sm:inline">
+          Demo — edits won&apos;t be saved
+        </span>
+        {demoDirty && <ResetButton />}
+        <button
+          onClick={() => {
+            resetDemo();
+            setMode("off");
+          }}
+          className="hover-veil cursor-pointer rounded-md border border-line px-3 py-1.5 text-xs text-ink-dim transition"
+        >
+          Exit demo
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => (authed ? setMode("real") : setModal("password"))}
+        className="cursor-pointer rounded-md border border-teal-400/40 bg-teal-400/10 px-3 py-1.5 text-xs font-semibold text-teal-300 transition hover:bg-teal-400/20"
+      >
+        ✎ Edit
+      </button>
+      <button
+        onClick={() => setModal("demo-info")}
+        className="cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-400/20"
+      >
+        Try demo
+      </button>
+    </div>
+  );
+}
+
 export default function Header() {
-  const { logout } = useAuth();
-  const { editMode, setEditMode } = useEditor();
+  const { light, toggle } = useTheme();
 
   return (
     <motion.header
@@ -82,33 +160,16 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <SaveBadge />
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-dim">
-            <span className={editMode ? "text-ink" : undefined}>Edit</span>
-            <button
-              role="switch"
-              aria-checked={editMode}
-              onClick={() => setEditMode(!editMode)}
-              className={`relative h-6 w-11 cursor-pointer rounded-full transition ${
-                editMode
-                  ? "bg-gradient-to-r from-teal-400 to-violet-400"
-                  : "bg-line"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
-                  editMode ? "left-[22px]" : "left-0.5"
-                }`}
-              />
-            </button>
-          </label>
+        <div className="flex items-center gap-2">
           <button
-            onClick={logout}
-            className="cursor-pointer rounded-md border border-line px-3 py-1.5 text-xs text-ink-dim transition hover:bg-white/5 hover:text-ink"
+            onClick={toggle}
+            aria-label={light ? "Switch to dark mode" : "Switch to light mode"}
+            title={light ? "Switch to dark mode" : "Switch to light mode"}
+            className="hover-veil cursor-pointer rounded-md border border-line px-2.5 py-1.5 text-sm leading-none transition"
           >
-            Lock
+            {light ? "☾" : "☀"}
           </button>
+          <EditControls />
         </div>
       </div>
     </motion.header>

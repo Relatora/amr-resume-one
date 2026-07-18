@@ -66,7 +66,7 @@ export default function Skills() {
                     <motion.span
                       key={item}
                       variants={popIn}
-                      className={`rounded-full border ${accent.border} ${accent.hoverBorder} bg-white/[0.03] px-3 py-1 text-xs text-ink transition hover:bg-white/[0.07]`}
+                      className={`rounded-full border ${accent.border} ${accent.hoverBorder} veil px-3 py-1 text-xs text-ink transition hover-veil`}
                     >
                       {item}
                     </motion.span>

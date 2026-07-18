@@ -81,7 +81,7 @@ export function StringListEditor({
   };
 
   const btn =
-    "cursor-pointer rounded-md border border-line px-1.5 py-1 text-xs text-ink-dim transition hover:bg-white/5 disabled:opacity-30 disabled:cursor-default";
+    "cursor-pointer rounded-md border border-line px-1.5 py-1 text-xs text-ink-dim transition hover-veil disabled:opacity-30 disabled:cursor-default";
 
   return (
     <div>
@@ -158,7 +158,7 @@ export function DeleteButton({
       </button>
       <button
         onClick={() => setConfirming(false)}
-        className="cursor-pointer rounded-lg border border-line px-3 py-2 text-xs text-ink-dim transition hover:bg-white/5"
+        className="cursor-pointer rounded-lg border border-line px-3 py-2 text-xs text-ink-dim transition hover-veil"
       >
         Cancel
       </button>

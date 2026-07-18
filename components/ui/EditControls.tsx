@@ -32,7 +32,7 @@ export function MoveButtons({
   canDown: boolean;
 }) {
   const base =
-    "cursor-pointer rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition hover:bg-white/5 disabled:opacity-30 disabled:cursor-default";
+    "cursor-pointer rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition hover-veil disabled:opacity-30 disabled:cursor-default";
   return (
     <span className="inline-flex gap-1">
       <button onClick={onUp} disabled={!canUp} aria-label="Move up" className={base}>

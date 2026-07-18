@@ -40,7 +40,7 @@ export default function Contact() {
             href={personal.website}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover:bg-white/5"
+            className="rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover-veil"
           >
             {personal.website.replace(/^https?:\/\//, "")}
           </a>
