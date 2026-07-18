@@ -72,8 +72,10 @@ export default function Galaxy() {
     };
 
     const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
+      // the canvas's CSS box, not window.innerWidth — the latter includes
+      // the scrollbar and would skew drawing coordinates slightly
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -376,7 +378,9 @@ export default function Galaxy() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
-      <canvas ref={canvasRef} className="absolute inset-0" />
+      {/* w/h-full is required: without CSS size a canvas renders at its
+          intrinsic (DPR-scaled) pixel size and overflows on HiDPI displays */}
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
 }
