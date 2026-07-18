@@ -29,10 +29,14 @@ interface Nebula {
 }
 
 const NEBULAE: Nebula[] = [
-  { fx: 0.18, fy: 0.28, fr: 0.55, dark: "45,212,191", light: "13,148,136", phase: 0, speed: 0.05 },
-  { fx: 0.85, fy: 0.65, fr: 0.6, dark: "139,92,246", light: "124,58,237", phase: 2.1, speed: 0.04 },
-  { fx: 0.5, fy: 0.95, fr: 0.5, dark: "244,114,182", light: "251,146,60", phase: 4.2, speed: 0.06 },
+  { fx: 0.18, fy: 0.28, fr: 0.62, dark: "45,212,191", light: "13,148,136", phase: 0, speed: 0.05 },
+  { fx: 0.85, fy: 0.65, fr: 0.68, dark: "139,92,246", light: "124,58,237", phase: 2.1, speed: 0.04 },
+  { fx: 0.5, fy: 0.95, fr: 0.56, dark: "244,114,182", light: "251,146,60", phase: 4.2, speed: 0.06 },
 ];
+
+// Black hole placement/size as viewport fractions — shared between the
+// renderer and the star loop (stars behind the event horizon are occluded).
+const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 
 // Full-viewport animated space scene behind the site.
 // Dark theme: twinkling stars, nebulas, shooting stars, and a Gargantua-style
@@ -102,10 +106,11 @@ export default function Galaxy() {
         const y = n.fy * height + wobY;
         const r = n.fr * minDim;
         const rgb = light ? n.light : n.dark;
-        const alpha = light ? 0.09 : 0.13;
+        const alpha = light ? 0.17 : 0.26;
         const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
         grad.addColorStop(0, `rgba(${rgb},${alpha})`);
-        grad.addColorStop(0.6, `rgba(${rgb},${alpha * 0.45})`);
+        grad.addColorStop(0.35, `rgba(${rgb},${alpha * 0.6})`);
+        grad.addColorStop(0.7, `rgba(${rgb},${alpha * 0.25})`);
         grad.addColorStop(1, `rgba(${rgb},0)`);
         ctx.fillStyle = grad;
         ctx.fillRect(x - r, y - r, r * 2, r * 2);
@@ -115,14 +120,14 @@ export default function Galaxy() {
     // Gargantua: glow → tilted accretion disk (back half) → event horizon →
     // photon ring → disk front half, with a slow shimmer.
     const drawBlackHole = (t: number) => {
-      const cx = width * 0.8;
-      const cy = height * 0.24;
-      const r = Math.min(width, height) * 0.055;
+      const cx = width * BH.fx;
+      const cy = height * BH.fy;
+      const r = Math.min(width, height) * BH.fr;
       const shimmer = 0.85 + 0.15 * Math.sin(t * 0.8);
 
       const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 3.4);
-      glow.addColorStop(0, `rgba(255,176,96,${0.22 * shimmer})`);
-      glow.addColorStop(0.5, `rgba(255,140,80,${0.08 * shimmer})`);
+      glow.addColorStop(0, `rgba(255,176,96,${0.32 * shimmer})`);
+      glow.addColorStop(0.5, `rgba(255,140,80,${0.12 * shimmer})`);
       glow.addColorStop(1, "rgba(255,140,80,0)");
       ctx.fillStyle = glow;
       ctx.fillRect(cx - r * 3.4, cy - r * 3.4, r * 6.8, r * 6.8);
@@ -167,7 +172,7 @@ export default function Galaxy() {
 
       // photon ring
       ctx.strokeStyle = `rgba(255,236,200,${0.9 * shimmer})`;
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.04, 0, Math.PI * 2);
       ctx.stroke();
@@ -179,7 +184,7 @@ export default function Galaxy() {
     const drawSun = (t: number) => {
       const cx = width * 0.8;
       const cy = height * 0.22;
-      const r = Math.min(width, height) * 0.05;
+      const r = Math.min(width, height) * 0.065;
       const breathe = 0.9 + 0.1 * Math.sin(t * 0.6);
 
       const halo = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 4);
@@ -225,6 +230,10 @@ export default function Galaxy() {
       const warpCx = width / 2;
       const warpCy = height * 0.45;
       const maxDist = Math.hypot(warpCx, warpCy);
+      // stars vanish behind the event horizon (dark theme only)
+      const bhX = width * BH.fx;
+      const bhY = height * BH.fy;
+      const bhR = Math.min(width, height) * BH.fr;
 
       // constellation lines — light theme, only when cruising (not warping)
       if (light && warp < 2) {
@@ -247,6 +256,7 @@ export default function Galaxy() {
           s.x -= s.drift;
           if (s.x < -2) s.x = width + 2;
         }
+        if (!light && Math.hypot(s.x - bhX, s.y - bhY) < bhR) continue;
         const alpha = maxAlpha * (0.35 + 0.65 * Math.abs(Math.sin(s.twinkle)));
 
         if (warp > 0.5) {
@@ -325,6 +335,8 @@ export default function Galaxy() {
     if (reduced) {
       drawFrame(false, 0);
     } else {
+      // paint immediately so the scene shows even before the first rAF tick
+      drawFrame(false, performance.now() / 1000);
       raf = requestAnimationFrame(loop);
     }
 
