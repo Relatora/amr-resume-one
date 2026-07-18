@@ -25,7 +25,7 @@ export default function Skills() {
   return (
     <section id="skills" className="relative scroll-mt-20">
       <WaveDivider />
-      <div className="bg-canvas-soft py-24">
+      <div className="bg-canvas-soft/60 py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <SectionHeading eyebrow="Toolbox" title="Skills" />
         <div className="grid gap-6 sm:grid-cols-2">

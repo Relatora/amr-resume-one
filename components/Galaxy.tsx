@@ -119,17 +119,21 @@ export default function Galaxy() {
       }
     };
 
-    // Gargantua: glow → tilted accretion disk (back half) → event horizon →
-    // photon ring → disk front half, with a slow shimmer.
+    // Gargantua, as in Interstellar: a razor-thin accretion disk seen nearly
+    // edge-on, gravitational lensing wrapping the far side of the disk into
+    // a halo that hugs the shadow, and Doppler beaming brightening the side
+    // of the disk that spins toward the viewer.
     const drawBlackHole = (t: number) => {
       const cx = width * BH.fx;
       const cy = height * BH.fy;
       const r = Math.min(width, height) * BH.fr;
       const shimmer = 0.85 + 0.15 * Math.sin(t * 0.8);
+      const tilt = -0.09; // almost edge-on, a slight cinematic lean
 
+      // ambient warmth thrown onto the surrounding space
       const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 3.4);
-      glow.addColorStop(0, `rgba(255,176,96,${0.32 * shimmer})`);
-      glow.addColorStop(0.5, `rgba(255,140,80,${0.12 * shimmer})`);
+      glow.addColorStop(0, `rgba(255,176,96,${0.3 * shimmer})`);
+      glow.addColorStop(0.5, `rgba(255,140,80,${0.1 * shimmer})`);
       glow.addColorStop(1, "rgba(255,140,80,0)");
       ctx.fillStyle = glow;
       ctx.fillRect(cx - r * 3.4, cy - r * 3.4, r * 6.8, r * 6.8);
@@ -137,75 +141,95 @@ export default function Galaxy() {
       const diskHalf = (half: "back" | "front") => {
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(-0.22);
-        ctx.scale(1, 0.24);
-        const disk = ctx.createRadialGradient(0, 0, r * 1.05, 0, 0, r * 2.6);
-        disk.addColorStop(0, `rgba(255,214,140,${0.85 * shimmer})`);
-        disk.addColorStop(0.4, `rgba(255,170,90,${0.5 * shimmer})`);
-        disk.addColorStop(1, "rgba(255,140,80,0)");
+        ctx.rotate(tilt);
+        ctx.scale(1, 0.13);
+        const disk = ctx.createRadialGradient(0, 0, r, 0, 0, r * 2.9);
+        disk.addColorStop(0, `rgba(255,244,214,${0.95 * shimmer})`);
+        disk.addColorStop(0.25, `rgba(255,196,110,${0.6 * shimmer})`);
+        disk.addColorStop(0.7, `rgba(255,150,80,${0.22 * shimmer})`);
+        disk.addColorStop(1, "rgba(255,130,70,0)");
         ctx.fillStyle = disk;
         ctx.beginPath();
-        if (half === "back") ctx.arc(0, 0, r * 2.6, Math.PI, 2 * Math.PI);
-        else ctx.arc(0, 0, r * 2.6, 0, Math.PI);
-        ctx.arc(0, 0, r * 1.02, half === "back" ? 2 * Math.PI : Math.PI, half === "back" ? Math.PI : 0, true);
+        if (half === "back") ctx.arc(0, 0, r * 2.9, Math.PI, 2 * Math.PI);
+        else ctx.arc(0, 0, r * 2.9, 0, Math.PI);
+        ctx.arc(0, 0, r, half === "back" ? 2 * Math.PI : Math.PI, half === "back" ? Math.PI : 0, true);
         ctx.closePath();
         ctx.fill();
 
-        // hot plasma blobs orbiting the horizon — drawn in the disk's own
-        // squashed coordinate space so they stay flattened into its plane
+        // hot plasma blobs orbiting the horizon, flattened into the disk plane
         for (const phase of [0, 2.6]) {
           const a = t * 0.7 + phase;
           const inFront = Math.sin(a) > 0;
           if ((half === "front") !== inFront) continue;
-          const hx = Math.cos(a) * r * 1.7;
-          const hy = Math.sin(a) * r * 1.7;
-          const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.55);
-          hot.addColorStop(0, `rgba(255,240,200,${0.6 * shimmer})`);
+          const hx = Math.cos(a) * r * 1.55;
+          const hy = Math.sin(a) * r * 1.55;
+          const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.45);
+          hot.addColorStop(0, `rgba(255,244,210,${0.65 * shimmer})`);
           hot.addColorStop(1, "rgba(255,200,120,0)");
           ctx.fillStyle = hot;
           ctx.beginPath();
-          ctx.arc(hx, hy, r * 0.55, 0, Math.PI * 2);
+          ctx.arc(hx, hy, r * 0.45, 0, Math.PI * 2);
           ctx.fill();
         }
         ctx.restore();
       };
 
+      // relativistic beaming: the approaching (left) side of the disk glows
+      // white-hot while the receding side stays a dimmer amber
+      const dopplerBeam = () => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(tilt);
+        ctx.scale(1, 0.13);
+        const beam = ctx.createRadialGradient(-r * 1.6, 0, 0, -r * 1.6, 0, r * 1.5);
+        beam.addColorStop(0, `rgba(255,252,240,${0.55 * shimmer})`);
+        beam.addColorStop(1, "rgba(255,240,210,0)");
+        ctx.fillStyle = beam;
+        ctx.beginPath();
+        ctx.arc(-r * 1.6, 0, r * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      };
+
       diskHalf("back");
 
-      // lensed halo above/below the horizon
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(0.42, 1);
-      ctx.strokeStyle = `rgba(255,200,130,${0.28 * shimmer})`;
-      ctx.lineWidth = r * 0.14;
+      // gravitational lensing: light from the disk behind the hole is bent
+      // over and under the shadow, forming a ring hugging the silhouette
+      const halo = ctx.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.75);
+      halo.addColorStop(0, `rgba(255,224,160,${0.5 * shimmer})`);
+      halo.addColorStop(0.3, `rgba(255,186,105,${0.2 * shimmer})`);
+      halo.addColorStop(1, "rgba(255,150,80,0)");
+      ctx.fillStyle = halo;
       ctx.beginPath();
-      ctx.arc(0, 0, r * 1.45, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
+      ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * 0.95, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.fill();
 
-      // event horizon
+      // the shadow — nothing escapes
       ctx.fillStyle = "#000";
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // photon ring — lensed light with a bright glint orbiting the horizon
+      // photon ring — a razor edge of lensed light with an orbiting glint
       if (typeof ctx.createConicGradient === "function") {
         const sweep = ctx.createConicGradient(t * 1.1, cx, cy);
-        sweep.addColorStop(0, `rgba(255,246,220,${0.95 * shimmer})`);
-        sweep.addColorStop(0.16, `rgba(255,222,165,${0.5 * shimmer})`);
-        sweep.addColorStop(0.6, `rgba(255,210,150,${0.28 * shimmer})`);
-        sweep.addColorStop(1, `rgba(255,246,220,${0.95 * shimmer})`);
+        sweep.addColorStop(0, `rgba(255,248,225,${0.95 * shimmer})`);
+        sweep.addColorStop(0.16, `rgba(255,224,168,${0.55 * shimmer})`);
+        sweep.addColorStop(0.6, `rgba(255,212,152,${0.32 * shimmer})`);
+        sweep.addColorStop(1, `rgba(255,248,225,${0.95 * shimmer})`);
         ctx.strokeStyle = sweep;
       } else {
-        ctx.strokeStyle = `rgba(255,236,200,${0.9 * shimmer})`;
+        ctx.strokeStyle = `rgba(255,240,205,${0.9 * shimmer})`;
       }
-      ctx.lineWidth = 2.6;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.04, 0, Math.PI * 2);
+      ctx.arc(cx, cy, r * 1.03, 0, Math.PI * 2);
       ctx.stroke();
 
       diskHalf("front");
+      dopplerBeam();
     };
 
     // The light theme's counterpart: a soft sun with a halo.
