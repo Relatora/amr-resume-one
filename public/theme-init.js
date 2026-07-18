@@ -3,4 +3,6 @@ try {
   if (localStorage.getItem("resume-theme") === "light") {
     document.documentElement.classList.add("light");
   }
-} catch (e) {}
+} catch {
+  // storage unavailable — default theme applies
+}

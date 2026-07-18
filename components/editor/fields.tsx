@@ -22,7 +22,7 @@ export function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-line bg-base px-3 py-2 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
+        className="w-full rounded-lg border border-line bg-canvas px-3 py-2 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
       />
     </label>
   );
@@ -48,7 +48,7 @@ export function TextArea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows}
-        className="w-full resize-y rounded-lg border border-line bg-base px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
+        className="w-full resize-y rounded-lg border border-line bg-canvas px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
       />
     </label>
   );
@@ -96,13 +96,13 @@ export function StringListEditor({
                 value={item}
                 onChange={(e) => setItem(i, e.target.value)}
                 rows={2}
-                className="min-w-0 flex-1 resize-y rounded-lg border border-line bg-base px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
+                className="min-w-0 flex-1 resize-y rounded-lg border border-line bg-canvas px-3 py-2 text-sm leading-relaxed outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
               />
             ) : (
               <input
                 value={item}
                 onChange={(e) => setItem(i, e.target.value)}
-                className="min-w-0 flex-1 rounded-lg border border-line bg-base px-3 py-2 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
+                className="min-w-0 flex-1 rounded-lg border border-line bg-canvas px-3 py-2 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
               />
             )}
             <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
@@ -120,7 +120,7 @@ export function StringListEditor({
               <button
                 onClick={() => remove(i)}
                 aria-label="Remove"
-                className={`${btn} hover:border-rose-400/50 hover:text-rose-300`}
+                className={`${btn} hover:border-rose-400/50 hover:text-accent-rose`}
               >
                 ×
               </button>
@@ -129,7 +129,7 @@ export function StringListEditor({
         ))}
         <button
           onClick={() => onChange([...items, ""])}
-          className="cursor-pointer rounded-lg border border-dashed border-teal-400/40 px-3 py-1.5 text-xs text-teal-300 transition hover:bg-teal-400/10"
+          className="cursor-pointer rounded-lg border border-dashed border-teal-400/40 px-3 py-1.5 text-xs text-accent-teal transition hover:bg-teal-400/10"
         >
           + {addLabel}
         </button>
@@ -149,10 +149,10 @@ export function DeleteButton({
 }) {
   return confirming ? (
     <span className="flex items-center gap-2">
-      <span className="text-xs text-rose-300">Delete this entry?</span>
+      <span className="text-xs text-accent-rose">Delete this entry?</span>
       <button
         onClick={onDelete}
-        className="cursor-pointer rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/30"
+        className="cursor-pointer rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-semibold text-accent-rose transition hover:bg-rose-500/30"
       >
         Yes, delete
       </button>
@@ -166,7 +166,7 @@ export function DeleteButton({
   ) : (
     <button
       onClick={() => setConfirming(true)}
-      className="cursor-pointer rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-rose-300 transition hover:bg-rose-500/10"
+      className="cursor-pointer rounded-lg border border-rose-400/30 px-3 py-2 text-xs text-accent-rose transition hover:bg-rose-500/10"
     >
       Delete
     </button>

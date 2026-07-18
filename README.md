@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Amr Abdallah — Personal Resume Website
 
-## Getting Started
+The interactive resume of **Amr Abdallah**, Software & Database Engineer and Software Team Lead at AlumaPower — live at [relatora.me](https://relatora.me).
 
-First, run the development server:
+I'm a full-stack engineer with 20+ years across the stack: from SMS banking solutions in the early 2000s to today's Azure cloud architecture (MQTT brokers, web services, app services, Kusto DB), AI-assisted development workflows, and Monolith AI platform integration. I lead a software team, teach front-end development at Lambton College, and have shipped products across web, mobile, desktop, embedded, and IoT.
+
+This site is both my resume and a small showcase of how I like to build: content-driven, animated with intent, and editable in place.
+
+## Highlights
+
+- **Animated, theme-aware UI** — dark/light modes, an animated galaxy starfield, gradient typography, wavy section separators, and scroll-staggered reveals built with Framer Motion.
+- **Content as data** — the entire resume lives in [`data/content.json`](data/content.json). No copy is hardcoded in components.
+- **In-page editing** — an owner mode (password-gated) edits every section through inline forms: add, remove, reorder, and rewrite without touching JSON.
+- **Demo mode** — visitors can try the editor safely; nothing persists, and a Reset button restores the original at any time.
+- **Hybrid persistence** — running locally, edits write straight back to `content.json`; on the deployed site they layer into `localStorage` with a one-click JSON export for committing later.
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js (App Router) + TypeScript |
+| Styling | Tailwind CSS v4 |
+| Animation | Framer Motion + a hand-rolled canvas starfield |
+| Content | Single typed `content.json` |
+| Hosting | Vercel (zero-config) |
+
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. In local dev, saves from the in-page editor write directly to `data/content.json` — commit and push to publish.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+data/content.json        # all resume content
+app/                     # layout, page, /api/content (dev-only file writes)
+components/sections/     # Hero, Experience, Skills, Education, Contact
+components/editor/       # slide-in edit panel + form primitives
+components/providers/    # auth, content (persistence), editor state
+components/Galaxy.tsx    # animated starfield background
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built by Amr Abdallah with an AI-assisted workflow. Reach me at [relatora@gmail.com](mailto:relatora@gmail.com).

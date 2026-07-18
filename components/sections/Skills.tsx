@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useContent } from "@/components/providers/ContentProvider";
 import { useEditor } from "@/components/providers/EditorProvider";
 import SectionHeading from "@/components/ui/SectionHeading";
+import WaveDivider from "@/components/ui/WaveDivider";
 import { AddButton, EditButton, MoveButtons } from "@/components/ui/EditControls";
 import { ACCENTS, fadeUp, popIn, stagger } from "@/lib/motion";
 
@@ -22,8 +23,10 @@ export default function Skills() {
     });
 
   return (
-    <section id="skills" className="relative scroll-mt-20 bg-base-soft py-24">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+    <section id="skills" className="relative scroll-mt-20">
+      <WaveDivider />
+      <div className="bg-canvas-soft py-24">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <SectionHeading eyebrow="Toolbox" title="Skills" />
         <div className="grid gap-6 sm:grid-cols-2">
           {content.skills.map((group, gi) => {
@@ -76,15 +79,17 @@ export default function Skills() {
             );
           })}
         </div>
-        {editMode && (
-          <div className="mt-8">
-            <AddButton
-              label="Add skill group"
-              onClick={() => openEditor({ kind: "skills", id: null })}
-            />
-          </div>
-        )}
+          {editMode && (
+            <div className="mt-8">
+              <AddButton
+                label="Add skill group"
+                onClick={() => openEditor({ kind: "skills", id: null })}
+              />
+            </div>
+          )}
+        </div>
       </div>
+      <WaveDivider flip />
     </section>
   );
 }

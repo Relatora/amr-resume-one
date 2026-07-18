@@ -7,12 +7,20 @@
 }
 
 @theme {
-  --color-base: #070b15;
-  --color-base-soft: #0b1120;
+  /* "canvas" not "base" — text-base is Tailwind's font-size utility */
+  --color-canvas: #070b15;
+  --color-canvas-soft: #0b1120;
   --color-card: #101830;
   --color-line: #1e293f;
   --color-ink: #e7ecf6;
-  --color-ink-dim: #94a3b8;
+  --color-ink-dim: #9daabd;
+  /* dark text for on-gradient buttons, same in both themes */
+  --color-on-accent: #06101c;
+  /* accent text colors — bright on dark, deep on light */
+  --color-accent-teal: #2dd4bf;
+  --color-accent-violet: #b1a0fc;
+  --color-accent-amber: #fbbf24;
+  --color-accent-rose: #fb7185;
   --animate-blob: blob 22s ease-in-out infinite;
   --animate-blob-slow: blob 30s ease-in-out infinite reverse;
   --animate-pan: pan 8s linear infinite;
@@ -41,28 +49,24 @@
 
 /* Light theme — toggled by adding .light to <html> */
 html.light {
-  --color-base: #f5f7fc;
-  --color-base-soft: #eceff7;
+  --color-canvas: #f5f7fc;
+  --color-canvas-soft: #e9edf6;
   --color-card: #ffffff;
-  --color-line: #d7dfec;
-  --color-ink: #101828;
-  --color-ink-dim: #51607a;
+  --color-line: #d3dcea;
+  --color-ink: #0e1626;
+  --color-ink-dim: #414e66;
+  --color-accent-teal: #0c7a70;
+  --color-accent-violet: #6b2bd8;
+  --color-accent-amber: #a1580a;
+  --color-accent-rose: #be123c;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Theme-aware translucent fills (white/5-style veils don't work in light mode) */
-.veil {
-  background: color-mix(in oklab, var(--color-ink) 4%, transparent);
-}
-.hover-veil:hover {
-  background: color-mix(in oklab, var(--color-ink) 7%, transparent);
-}
-
 body {
-  background: var(--color-base);
+  background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
@@ -88,6 +92,19 @@ body {
   animation: var(--animate-pan);
 }
 
+/* Deeper gradient stops so the text stays readable on a light page */
+html.light .gradient-text {
+  background-image: linear-gradient(
+    90deg,
+    #0c7a70,
+    #6b2bd8,
+    #a1580a,
+    #6b2bd8,
+    #0c7a70
+  );
+  background-size: 200% auto;
+}
+
 .gradient-border {
   position: relative;
   background:
@@ -101,6 +118,31 @@ body {
   background-image: radial-gradient(#33415577 1px, transparent 1px);
   background-size: 28px 28px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
+}
+
+/* Theme-aware translucent fills (white/5-style veils don't work in light mode) */
+.veil {
+  background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+.hover-veil:hover {
+  background: color-mix(in oklab, var(--color-ink) 7%, transparent);
+}
+
+/* Every button gives tactile feedback on press */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled),
+  .press {
+    transition:
+      transform 0.12s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      opacity 0.2s ease;
+  }
+  button:not(:disabled):active,
+  .press:active {
+    transform: scale(0.93);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

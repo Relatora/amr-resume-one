@@ -51,7 +51,7 @@ function PanelShell({
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 32 }}
-        className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-line bg-base-soft shadow-2xl sm:max-w-md"
+        className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-line bg-canvas-soft shadow-2xl sm:max-w-md"
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h2 className="font-display text-lg font-bold">{title}</h2>
@@ -86,7 +86,7 @@ function SaveCancelRow({
       <div className="flex gap-2">
         <button
           onClick={onSave}
-          className="cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-5 py-2 text-sm font-semibold text-base transition hover:opacity-90 active:scale-[0.98]"
+          className="cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-5 py-2 text-sm font-semibold text-on-accent transition hover:opacity-90 active:scale-[0.98]"
         >
           Save
         </button>

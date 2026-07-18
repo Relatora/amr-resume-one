@@ -18,7 +18,7 @@ export default function SectionHeading({
       viewport={{ once: true, margin: "-80px" }}
       className="mb-10"
     >
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-teal-300">
+      <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-teal">
         {eyebrow}
       </p>
       <h2 className="font-display mt-2 text-3xl font-bold sm:text-4xl">

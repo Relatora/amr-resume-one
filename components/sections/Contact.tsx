@@ -18,7 +18,7 @@ export default function Contact() {
         viewport={{ once: true, margin: "-80px" }}
         className="relative mx-auto max-w-3xl px-4 text-center sm:px-6"
       >
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-teal-300">
+        <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-teal">
           Contact
         </p>
         <h2 className="font-display mt-3 text-3xl font-bold sm:text-5xl">
@@ -32,7 +32,7 @@ export default function Contact() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
             href={`mailto:${personal.email}`}
-            className="rounded-lg bg-gradient-to-r from-teal-400 via-violet-400 to-amber-400 px-6 py-3 text-sm font-semibold text-base transition hover:opacity-90 hover:shadow-lg hover:shadow-violet-400/20 active:scale-[0.98]"
+            className="press rounded-lg bg-gradient-to-r from-teal-400 via-violet-400 to-amber-400 px-6 py-3 text-sm font-semibold text-on-accent transition hover:opacity-90 hover:shadow-lg hover:shadow-violet-400/20 active:scale-[0.98]"
           >
             {personal.email}
           </a>
@@ -40,7 +40,7 @@ export default function Contact() {
             href={personal.website}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover-veil"
+            className="press rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover-veil"
           >
             {personal.website.replace(/^https?:\/\//, "")}
           </a>

@@ -30,7 +30,7 @@ export default function Hero() {
       >
         <motion.p
           variants={fadeUp}
-          className="font-mono text-sm uppercase tracking-[0.35em] text-teal-300"
+          className="font-mono text-sm uppercase tracking-[0.35em] text-accent-teal"
         >
           {personal.location}
         </motion.p>
@@ -39,10 +39,7 @@ export default function Hero() {
           variants={fadeUp}
           className="font-display mt-4 text-5xl font-extrabold leading-[1.05] sm:text-7xl"
         >
-          {personal.name.split(" ")[0]}{" "}
-          <span className="gradient-text">
-            {personal.name.split(" ").slice(1).join(" ")}
-          </span>
+          <span className="gradient-text">{personal.name}</span>
         </motion.h1>
 
         <motion.p
@@ -62,7 +59,7 @@ export default function Hero() {
         <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-3">
           <a
             href={`mailto:${personal.email}`}
-            className="rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-5 py-3 text-sm font-semibold text-base transition hover:opacity-90 hover:shadow-lg hover:shadow-violet-400/20 active:scale-[0.98]"
+            className="press rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-5 py-3 text-sm font-semibold text-on-accent transition hover:opacity-90 hover:shadow-lg hover:shadow-violet-400/20 active:scale-[0.98]"
           >
             Get in touch
           </a>
@@ -70,7 +67,7 @@ export default function Hero() {
             href={personal.website}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink transition hover:border-teal-400/50 hover-veil"
+            className="press rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink transition hover:border-teal-400/50 hover-veil"
           >
             {personal.website.replace(/^https?:\/\//, "")}
           </a>
@@ -91,7 +88,7 @@ export default function Hero() {
           <motion.span
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="block text-2xl text-ink-dim transition group-hover:text-teal-300"
+            className="block text-2xl text-ink-dim transition group-hover:text-accent-teal"
           >
             ↓
           </motion.span>

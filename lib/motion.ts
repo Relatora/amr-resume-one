@@ -25,21 +25,21 @@ export const popIn: Variants = {
 
 export const ACCENTS = [
   {
-    text: "text-teal-300",
+    text: "text-accent-teal",
     border: "border-teal-400/30",
     hoverBorder: "hover:border-teal-300/60",
     dot: "bg-teal-400",
     glow: "hover:shadow-teal-400/10",
   },
   {
-    text: "text-violet-300",
+    text: "text-accent-violet",
     border: "border-violet-400/30",
     hoverBorder: "hover:border-violet-300/60",
     dot: "bg-violet-400",
     glow: "hover:shadow-violet-400/10",
   },
   {
-    text: "text-amber-300",
+    text: "text-accent-amber",
     border: "border-amber-400/30",
     hoverBorder: "hover:border-amber-300/60",
     dot: "bg-amber-400",

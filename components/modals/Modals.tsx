@@ -64,7 +64,7 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
 
   return (
     <ModalShell onClose={onClose}>
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-teal-300">
+      <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-teal">
         Owner access
       </p>
       <h2 className="font-display mt-2 text-2xl font-bold">Edit resume</h2>
@@ -87,15 +87,15 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
           }}
           placeholder="Password"
           autoFocus
-          className="w-full rounded-lg border border-line bg-base px-4 py-3 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
+          className="w-full rounded-lg border border-line bg-canvas px-4 py-3 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
         />
         {error && (
-          <p className="text-xs text-rose-400">That&apos;s not it — try again.</p>
+          <p className="text-xs text-accent-rose">That&apos;s not it — try again.</p>
         )}
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 via-violet-400 to-amber-400 px-4 py-3 text-sm font-semibold text-base transition hover:opacity-90 active:scale-[0.98]"
+            className="flex-1 cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 via-violet-400 to-amber-400 px-4 py-3 text-sm font-semibold text-on-accent transition hover:opacity-90 active:scale-[0.98]"
           >
             Unlock
           </button>
@@ -124,7 +124,7 @@ function DemoInfoModal({ onClose }: { onClose: () => void }) {
 
   return (
     <ModalShell onClose={onClose}>
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-violet-300">
+      <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent-violet">
         Try it out
       </p>
       <h2 className="font-display mt-2 text-2xl font-bold">Demo edit mode</h2>
@@ -140,7 +140,7 @@ function DemoInfoModal({ onClose }: { onClose: () => void }) {
       <div className="mt-6 flex gap-2">
         <button
           onClick={begin}
-          className="flex-1 cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-4 py-3 text-sm font-semibold text-base transition hover:opacity-90 active:scale-[0.98]"
+          className="flex-1 cursor-pointer rounded-lg bg-gradient-to-r from-teal-400 to-violet-400 px-4 py-3 text-sm font-semibold text-on-accent transition hover:opacity-90 active:scale-[0.98]"
         >
           Let me try
         </button>

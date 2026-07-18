@@ -46,7 +46,7 @@ function ExperienceCard({
     >
       {/* timeline dot + line */}
       <span
-        className={`absolute left-0 top-2 h-3 w-3 rounded-full ${accent.dot} ring-4 ring-base`}
+        className={`absolute left-0 top-2 h-3 w-3 rounded-full ${accent.dot} ring-4 ring-canvas`}
       />
       {index < total - 1 && (
         <span className="absolute left-[5px] top-6 bottom-[-2.5rem] w-0.5 bg-gradient-to-b from-line to-transparent" />

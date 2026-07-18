@@ -13,7 +13,7 @@ export function EditButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/10 px-2 py-1 text-xs text-violet-300 transition hover:bg-violet-400/20"
+      className="cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/10 px-2 py-1 text-xs text-accent-violet transition hover:bg-violet-400/20"
     >
       ✎ {label}
     </button>
@@ -60,7 +60,7 @@ export function AddButton({
   return (
     <button
       onClick={onClick}
-      className="cursor-pointer rounded-lg border border-dashed border-teal-400/40 px-4 py-2 text-sm text-teal-300 transition hover:bg-teal-400/10"
+      className="cursor-pointer rounded-lg border border-dashed border-teal-400/40 px-4 py-2 text-sm text-accent-teal transition hover:bg-teal-400/10"
     >
       + {label}
     </button>

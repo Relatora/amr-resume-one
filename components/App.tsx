@@ -12,13 +12,15 @@ import Education from "@/components/sections/Education";
 import Contact from "@/components/sections/Contact";
 import EditPanel from "@/components/editor/EditPanel";
 import Modals from "@/components/modals/Modals";
+import Galaxy from "@/components/Galaxy";
 
 export default function App({ initial }: { initial: ResumeContent }) {
   return (
     <AuthProvider>
       <EditorProvider>
         <ContentProvider initial={initial}>
-          <div className="relative">
+          <Galaxy />
+          <div className="relative z-10">
             <Header />
             <main>
               <Hero />
