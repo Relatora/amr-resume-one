@@ -119,117 +119,176 @@ export default function Galaxy() {
       }
     };
 
-    // Gargantua, as in Interstellar: a razor-thin accretion disk seen nearly
-    // edge-on, gravitational lensing wrapping the far side of the disk into
-    // a halo that hugs the shadow, and Doppler beaming brightening the side
-    // of the disk that spins toward the viewer.
+    // --- Gargantua ---------------------------------------------------------
+    // A miniature general-relativity ray tracer, run once into an offscreen
+    // sprite. For each pixel a light ray is marched backward past the hole
+    // under Schwarzschild deflection (a = -1.5 h² x / r⁵ in geometrized
+    // units); rays that spiral inside the photon sphere paint the shadow,
+    // rays that strike the disk plane sample its glow. The lensed halo over
+    // the shadow, the photon ring, and the Doppler-beamed bright side all
+    // emerge from the geometry — none of them is painted on.
+    const B_CRIT = 2.6; // critical impact parameter → apparent shadow radius
+    const R_IN = 3.0; // disk inner edge (units of M)
+    const R_OUT = 8.5; // disk outer edge
+    const TILT = 0.06; // camera elevation above the disk plane (radians)
+    const ROLL = -0.09; // cinematic lean applied when blitting
+    const SPRITE_HW = 9.6; // sprite half-extent, geometrized units
+    const SPRITE_HH = 5.2;
+    let sprite: HTMLCanvasElement | null = null;
+    let spriteR = 0; // shadow radius (px) the sprite was built for
+
+    const buildGargantua = (rPx: number): HTMLCanvasElement => {
+      const unit = rPx / B_CRIT;
+      // render scale bounded so the one-time march stays around 100ms;
+      // the upscale on blit reads as cinematic bloom
+      const full = 4 * SPRITE_HW * SPRITE_HH * unit * unit;
+      const ss = Math.min(0.9, Math.max(0.35, Math.sqrt(120000 / full)));
+      const w = Math.ceil(2 * SPRITE_HW * unit * ss);
+      const h = Math.ceil(2 * SPRITE_HH * unit * ss);
+      const img = new ImageData(w, h);
+      const d = img.data;
+      const cosT = Math.cos(TILT);
+      const sinT = Math.sin(TILT);
+
+      for (let j = 0; j < h; j++) {
+        const sy = SPRITE_HH - (j + 0.5) / (ss * unit);
+        for (let i = 0; i < w; i++) {
+          const sx = (i + 0.5) / (ss * unit) - SPRITE_HW;
+          const h2 = sx * sx + sy * sy; // conserved angular momentum²
+          if (h2 > 88) continue; // too far out for any light path
+
+          let x = sx, y = sy, z = 10;
+          let vx = 0, vy = 0, vz = -1;
+          let side = y * cosT + z * sinT;
+          let r2 = h2 + 100;
+          let captured = false;
+          let cg = 0, cb = 0, ca = 0;
+
+          for (let s = 0; s < 380; s++) {
+            r2 = x * x + y * y + z * z;
+            if (r2 < 1) { captured = true; break; } // fell through the horizon
+            const r1 = Math.sqrt(r2);
+            const f = (-1.5 * h2) / (r2 * r2 * r1);
+            const dt = Math.min(0.22, Math.max(0.03, 0.06 * r1));
+            vx += f * x * dt; vy += f * y * dt; vz += f * z * dt;
+            const px0 = x, py0 = y, pz0 = z;
+            x += vx * dt; y += vy * dt; z += vz * dt;
+
+            const sideN = y * cosT + z * sinT;
+            if (side * sideN < 0) {
+              // crossed the disk plane — interpolate the hit point
+              const k = side / (side - sideN);
+              const hx = px0 + (x - px0) * k;
+              const hy = py0 + (y - py0) * k;
+              const hz = pz0 + (z - pz0) * k;
+              const rr = Math.sqrt(hx * hx + hy * hy + hz * hz);
+              if (rr >= R_IN && rr <= R_OUT) {
+                // emissivity falls with radius; faint spiral striations
+                const phi = Math.atan2(hz, hx);
+                let E = Math.pow(R_IN / rr, 2.2) * 1.7;
+                E *= 0.82 + 0.18 * Math.sin(rr * 7 + phi * 3);
+                E *= Math.min(1, (R_OUT - rr) / 1.4); // outer fade
+                E *= Math.min(1, (rr - R_IN) / 0.25 + 0.15); // inner edge
+                // Doppler beaming: the orbit tangent's line-of-sight part
+                const dz = (-cosT * hx) / rr;
+                const beta = 0.5 * Math.sqrt(R_IN / rr);
+                const dopp = 1 / (1 - beta * dz);
+                E *= dopp * dopp * dopp;
+                const v = 1 - Math.exp(-E); // tone-map
+                const heat = Math.min(1, E * 0.75);
+                cg = 150 + 98 * heat;
+                cb = 64 + 164 * heat;
+                ca = Math.min(1, v * 1.5);
+                break;
+              }
+            }
+            side = sideN;
+            if (r2 > 180 || (z < -11 && vz < 0)) break; // escaped
+          }
+          // rays still circling the photon sphere after the step budget
+          if (!captured && ca === 0 && r2 < 9) captured = true;
+
+          const o = (j * w + i) * 4;
+          if (captured) {
+            d[o + 3] = 255; // the shadow: opaque black
+          } else if (ca > 0) {
+            d[o] = 255;
+            d[o + 1] = cg;
+            d[o + 2] = cb;
+            d[o + 3] = Math.round(ca * 255);
+          }
+        }
+      }
+
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const sctx = c.getContext("2d");
+      if (sctx) sctx.putImageData(img, 0, 0);
+      return c;
+    };
+
     const drawBlackHole = (t: number) => {
       const cx = width * BH.fx;
       const cy = height * BH.fy;
       const r = Math.min(width, height) * BH.fr;
+      // the sprite scales cleanly on blit, so rebuild only on large jumps
+      if (!sprite || r > spriteR * 1.3 || r < spriteR * 0.5) {
+        sprite = buildGargantua(r);
+        spriteR = r;
+      }
       const shimmer = 0.85 + 0.15 * Math.sin(t * 0.8);
-      const tilt = -0.09; // almost edge-on, a slight cinematic lean
+      const unit = r / B_CRIT;
 
       // ambient warmth thrown onto the surrounding space
-      const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 3.4);
-      glow.addColorStop(0, `rgba(255,176,96,${0.3 * shimmer})`);
-      glow.addColorStop(0.5, `rgba(255,140,80,${0.1 * shimmer})`);
+      const glow = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 3.2);
+      glow.addColorStop(0, `rgba(255,170,90,${0.16 * shimmer})`);
       glow.addColorStop(1, "rgba(255,140,80,0)");
       ctx.fillStyle = glow;
-      ctx.fillRect(cx - r * 3.4, cy - r * 3.4, r * 6.8, r * 6.8);
+      ctx.fillRect(cx - r * 3.2, cy - r * 3.2, r * 6.4, r * 6.4);
 
-      const diskHalf = (half: "back" | "front") => {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(tilt);
-        ctx.scale(1, 0.13);
-        const disk = ctx.createRadialGradient(0, 0, r, 0, 0, r * 2.9);
-        disk.addColorStop(0, `rgba(255,244,214,${0.95 * shimmer})`);
-        disk.addColorStop(0.25, `rgba(255,196,110,${0.6 * shimmer})`);
-        disk.addColorStop(0.7, `rgba(255,150,80,${0.22 * shimmer})`);
-        disk.addColorStop(1, "rgba(255,130,70,0)");
-        ctx.fillStyle = disk;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ROLL);
+      ctx.globalAlpha = 0.92 + 0.08 * Math.sin(t * 0.8);
+      ctx.drawImage(
+        sprite,
+        -SPRITE_HW * unit,
+        -SPRITE_HH * unit,
+        2 * SPRITE_HW * unit,
+        2 * SPRITE_HH * unit
+      );
+      ctx.globalAlpha = 1;
+
+      // hot plasma knots riding the near side of the disk
+      for (const phase of [0, 2.6]) {
+        const a = t * 0.7 + phase;
+        if (Math.sin(a) <= 0) continue; // behind the hole
+        const hx = Math.cos(a) * r * 1.55;
+        const hy = Math.sin(a) * r * 1.55 * 0.08;
+        const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.3);
+        hot.addColorStop(0, `rgba(255,246,214,${0.5 * shimmer})`);
+        hot.addColorStop(1, "rgba(255,200,120,0)");
+        ctx.fillStyle = hot;
         ctx.beginPath();
-        if (half === "back") ctx.arc(0, 0, r * 2.9, Math.PI, 2 * Math.PI);
-        else ctx.arc(0, 0, r * 2.9, 0, Math.PI);
-        ctx.arc(0, 0, r, half === "back" ? 2 * Math.PI : Math.PI, half === "back" ? Math.PI : 0, true);
-        ctx.closePath();
+        ctx.arc(hx, hy, r * 0.3, 0, Math.PI * 2);
         ctx.fill();
+      }
+      ctx.restore();
 
-        // hot plasma blobs orbiting the horizon, flattened into the disk plane
-        for (const phase of [0, 2.6]) {
-          const a = t * 0.7 + phase;
-          const inFront = Math.sin(a) > 0;
-          if ((half === "front") !== inFront) continue;
-          const hx = Math.cos(a) * r * 1.55;
-          const hy = Math.sin(a) * r * 1.55;
-          const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.45);
-          hot.addColorStop(0, `rgba(255,244,210,${0.65 * shimmer})`);
-          hot.addColorStop(1, "rgba(255,200,120,0)");
-          ctx.fillStyle = hot;
-          ctx.beginPath();
-          ctx.arc(hx, hy, r * 0.45, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      };
-
-      // relativistic beaming: the approaching (left) side of the disk glows
-      // white-hot while the receding side stays a dimmer amber
-      const dopplerBeam = () => {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(tilt);
-        ctx.scale(1, 0.13);
-        const beam = ctx.createRadialGradient(-r * 1.6, 0, 0, -r * 1.6, 0, r * 1.5);
-        beam.addColorStop(0, `rgba(255,252,240,${0.55 * shimmer})`);
-        beam.addColorStop(1, "rgba(255,240,210,0)");
-        ctx.fillStyle = beam;
-        ctx.beginPath();
-        ctx.arc(-r * 1.6, 0, r * 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      };
-
-      diskHalf("back");
-
-      // gravitational lensing: light from the disk behind the hole is bent
-      // over and under the shadow, forming a ring hugging the silhouette
-      const halo = ctx.createRadialGradient(cx, cy, r * 0.95, cx, cy, r * 1.75);
-      halo.addColorStop(0, `rgba(255,224,160,${0.5 * shimmer})`);
-      halo.addColorStop(0.3, `rgba(255,186,105,${0.2 * shimmer})`);
-      halo.addColorStop(1, "rgba(255,150,80,0)");
-      ctx.fillStyle = halo;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.75, 0, Math.PI * 2);
-      ctx.arc(cx, cy, r * 0.95, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.fill();
-
-      // the shadow — nothing escapes
-      ctx.fillStyle = "#000";
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
-
-      // photon ring — a razor edge of lensed light with an orbiting glint
+      // orbiting glint riding the photon ring
       if (typeof ctx.createConicGradient === "function") {
         const sweep = ctx.createConicGradient(t * 1.1, cx, cy);
-        sweep.addColorStop(0, `rgba(255,248,225,${0.95 * shimmer})`);
-        sweep.addColorStop(0.16, `rgba(255,224,168,${0.55 * shimmer})`);
-        sweep.addColorStop(0.6, `rgba(255,212,152,${0.32 * shimmer})`);
-        sweep.addColorStop(1, `rgba(255,248,225,${0.95 * shimmer})`);
+        sweep.addColorStop(0, `rgba(255,248,225,${0.75 * shimmer})`);
+        sweep.addColorStop(0.14, "rgba(255,224,168,0)");
+        sweep.addColorStop(0.86, "rgba(255,224,168,0)");
+        sweep.addColorStop(1, `rgba(255,248,225,${0.75 * shimmer})`);
         ctx.strokeStyle = sweep;
-      } else {
-        ctx.strokeStyle = `rgba(255,240,205,${0.9 * shimmer})`;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 1.02, 0, Math.PI * 2);
+        ctx.stroke();
       }
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.03, 0, Math.PI * 2);
-      ctx.stroke();
-
-      diskHalf("front");
-      dopplerBeam();
     };
 
     // The light theme's counterpart: a soft sun with a halo.
