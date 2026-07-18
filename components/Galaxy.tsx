@@ -73,9 +73,10 @@ export default function Galaxy() {
 
     const resize = () => {
       // the canvas's CSS box, not window.innerWidth — the latter includes
-      // the scrollbar and would skew drawing coordinates slightly
-      width = canvas.clientWidth;
-      height = canvas.clientHeight;
+      // the scrollbar and would skew drawing coordinates slightly (the
+      // window fallback covers a detached canvas mid-HMR, which reads 0)
+      width = canvas.clientWidth || window.innerWidth;
+      height = canvas.clientHeight || window.innerHeight;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -120,13 +121,16 @@ export default function Galaxy() {
     };
 
     // --- Gargantua ---------------------------------------------------------
-    // A miniature general-relativity ray tracer, run once into an offscreen
-    // sprite. For each pixel a light ray is marched backward past the hole
-    // under Schwarzschild deflection (a = -1.5 h² x / r⁵ in geometrized
-    // units); rays that spiral inside the photon sphere paint the shadow,
-    // rays that strike the disk plane sample its glow. The lensed halo over
-    // the shadow, the photon ring, and the Doppler-beamed bright side all
-    // emerge from the geometry — none of them is painted on.
+    // A miniature general-relativity ray tracer. The geometry is traced once
+    // into per-pixel maps: for each pixel a light ray is marched backward
+    // past the hole under Schwarzschild deflection (a = -1.5 h² x / r⁵ in
+    // geometrized units). Rays that spiral inside the photon sphere paint
+    // the shadow; rays that strike the disk plane record their hit point
+    // (radius, azimuth) and static shading (emissivity falloff, Doppler
+    // beaming). Each frame only the disk *texture* is recomputed from those
+    // maps — differentially rotating spiral turbulence — so the gas visibly
+    // flows around the hole, and the lensed arch above the shadow animates
+    // in sync because it is the same material seen twice.
     const B_CRIT = 2.6; // critical impact parameter → apparent shadow radius
     const R_IN = 3.0; // disk inner edge (units of M)
     const R_OUT = 8.5; // disk outer edge
@@ -135,18 +139,29 @@ export default function Galaxy() {
     const SPRITE_HW = 9.6; // sprite half-extent, geometrized units
     const SPRITE_HH = 5.2;
     let sprite: HTMLCanvasElement | null = null;
+    let spriteCtx: CanvasRenderingContext2D | null = null;
+    let spriteImg: ImageData | null = null;
     let spriteR = 0; // shadow radius (px) the sprite was built for
+    let diskIdx: Int32Array | null = null; // pixel index of each disk texel
+    let diskParams: Float32Array | null = null; // base,a1,b1,a2,b2 per texel
+    let diskCount = 0;
+    let diskT = -1; // timestamp of the last texture update
 
-    const buildGargantua = (rPx: number): HTMLCanvasElement => {
+    const buildGargantua = (rPx: number) => {
       const unit = rPx / B_CRIT;
-      // render scale bounded so the one-time march stays around 100ms;
-      // the upscale on blit reads as cinematic bloom
+      // render scale bounded so the one-time march stays fast; the upscale
+      // on blit reads as cinematic bloom
       const full = 4 * SPRITE_HW * SPRITE_HH * unit * unit;
-      const ss = Math.min(0.9, Math.max(0.35, Math.sqrt(120000 / full)));
+      const ss = Math.min(1, Math.max(0.4, Math.sqrt(120000 / full)));
       const w = Math.ceil(2 * SPRITE_HW * unit * ss);
       const h = Math.ceil(2 * SPRITE_HH * unit * ss);
-      const img = new ImageData(w, h);
-      const d = img.data;
+      if (w < 2 || h < 2) return; // degenerate viewport; retry next frame
+      const n = w * h;
+      // classification per pixel: 0 empty, 1 disk, 2 shadow
+      const cls = new Uint8Array(n);
+      const hitR = new Float32Array(n);
+      const hitPhi = new Float32Array(n);
+      const hitBase = new Float32Array(n);
       const cosT = Math.cos(TILT);
       const sinT = Math.sin(TILT);
 
@@ -161,15 +176,14 @@ export default function Galaxy() {
           let vx = 0, vy = 0, vz = -1;
           let side = y * cosT + z * sinT;
           let r2 = h2 + 100;
-          let captured = false;
-          let cg = 0, cb = 0, ca = 0;
+          const p = j * w + i;
 
-          for (let s = 0; s < 380; s++) {
+          for (let s = 0; s < 520; s++) {
             r2 = x * x + y * y + z * z;
-            if (r2 < 1) { captured = true; break; } // fell through the horizon
+            if (r2 < 1) { cls[p] = 2; break; } // fell through the horizon
             const r1 = Math.sqrt(r2);
             const f = (-1.5 * h2) / (r2 * r2 * r1);
-            const dt = Math.min(0.22, Math.max(0.03, 0.06 * r1));
+            const dt = Math.min(0.2, Math.max(0.02, 0.045 * r1));
             vx += f * x * dt; vy += f * y * dt; vz += f * z * dt;
             const px0 = x, py0 = y, pz0 = z;
             x += vx * dt; y += vy * dt; z += vz * dt;
@@ -183,22 +197,17 @@ export default function Galaxy() {
               const hz = pz0 + (z - pz0) * k;
               const rr = Math.sqrt(hx * hx + hy * hy + hz * hz);
               if (rr >= R_IN && rr <= R_OUT) {
-                // emissivity falls with radius; faint spiral striations
-                const phi = Math.atan2(hz, hx);
-                let E = Math.pow(R_IN / rr, 2.2) * 1.7;
-                E *= 0.82 + 0.18 * Math.sin(rr * 7 + phi * 3);
-                E *= Math.min(1, (R_OUT - rr) / 1.4); // outer fade
-                E *= Math.min(1, (rr - R_IN) / 0.25 + 0.15); // inner edge
+                let base = Math.pow(R_IN / rr, 2.2) * 1.7;
+                base *= Math.min(1, (R_OUT - rr) / 1.4); // outer fade
+                base *= Math.min(1, (rr - R_IN) / 0.25 + 0.15); // inner edge
                 // Doppler beaming: the orbit tangent's line-of-sight part
                 const dz = (-cosT * hx) / rr;
                 const beta = 0.5 * Math.sqrt(R_IN / rr);
                 const dopp = 1 / (1 - beta * dz);
-                E *= dopp * dopp * dopp;
-                const v = 1 - Math.exp(-E); // tone-map
-                const heat = Math.min(1, E * 0.75);
-                cg = 150 + 98 * heat;
-                cb = 64 + 164 * heat;
-                ca = Math.min(1, v * 1.5);
+                cls[p] = 1;
+                hitR[p] = rr;
+                hitPhi[p] = Math.atan2(hz, hx);
+                hitBase[p] = base * dopp * dopp * dopp;
                 break;
               }
             }
@@ -206,26 +215,93 @@ export default function Galaxy() {
             if (r2 > 180 || (z < -11 && vz < 0)) break; // escaped
           }
           // rays still circling the photon sphere after the step budget
-          if (!captured && ca === 0 && r2 < 9) captured = true;
+          if (cls[p] === 0 && r2 < 9) cls[p] = 2;
+        }
+      }
 
-          const o = (j * w + i) * 4;
-          if (captured) {
-            d[o + 3] = 255; // the shadow: opaque black
-          } else if (ca > 0) {
-            d[o] = 255;
-            d[o + 1] = cg;
-            d[o + 2] = cb;
-            d[o + 3] = Math.round(ca * 255);
+      // Despeckle the rim: near the critical radius neighboring rays flip
+      // chaotically between captured and disk-hit, which reads as noise.
+      // Majority-vote isolated pixels against their 4-neighborhood.
+      const cls0 = cls.slice();
+      for (let j = 1; j < h - 1; j++) {
+        const sy = SPRITE_HH - (j + 0.5) / (ss * unit);
+        for (let i = 1; i < w - 1; i++) {
+          const sx = (i + 0.5) / (ss * unit) - SPRITE_HW;
+          const b = Math.sqrt(sx * sx + sy * sy);
+          if (b < 2.0 || b > 3.6) continue;
+          const p = j * w + i;
+          const nb = [p - 1, p + 1, p - w, p + w];
+          const diskN = nb.filter((q) => cls0[q] === 1);
+          const shadowN = nb.filter((q) => cls0[q] === 2);
+          if (cls0[p] === 2 && diskN.length >= 3) {
+            const q = diskN[0];
+            cls[p] = 1;
+            hitR[p] = hitR[q];
+            hitPhi[p] = hitPhi[q];
+            hitBase[p] = hitBase[q];
+          } else if (cls0[p] === 1 && shadowN.length >= 3) {
+            cls[p] = 2;
           }
+        }
+      }
+
+      // bake the static pixels; index the animated disk texels
+      const img = new ImageData(w, h);
+      const idx = new Int32Array(n);
+      const params = new Float32Array(n * 5);
+      let count = 0;
+      for (let p = 0; p < n; p++) {
+        if (cls[p] === 2) {
+          img.data[p * 4 + 3] = 255; // the shadow: opaque black
+        } else if (cls[p] === 1) {
+          const rr = hitR[p];
+          const phi = hitPhi[p];
+          // Keplerian angular speed — inner gas laps the outer gas, which
+          // shears the turbulence into trailing spirals
+          const omega = 2.4 / Math.pow(rr, 1.5);
+          const o = count * 5;
+          idx[count] = p;
+          params[o] = hitBase[p];
+          params[o + 1] = rr * 6 - 2 * phi; // spiral wave 1 spatial phase
+          params[o + 2] = 2 * omega; //           ...temporal frequency
+          params[o + 3] = rr * 11 + 5 * phi + 1.7; // spiral wave 2
+          params[o + 4] = 5 * omega;
+          count++;
         }
       }
 
       const c = document.createElement("canvas");
       c.width = w;
       c.height = h;
-      const sctx = c.getContext("2d");
-      if (sctx) sctx.putImageData(img, 0, 0);
-      return c;
+      sprite = c;
+      spriteCtx = c.getContext("2d");
+      spriteImg = img;
+      diskIdx = idx;
+      diskParams = params;
+      diskCount = count;
+      diskT = -1;
+    };
+
+    // Recompute only the disk texels from the traced maps — two counter-
+    // shearing spiral waves riding the Keplerian flow.
+    const updateDiskTexture = (t: number) => {
+      if (!spriteCtx || !spriteImg || !diskIdx || !diskParams) return;
+      const d = spriteImg.data;
+      for (let k = 0; k < diskCount; k++) {
+        const o = k * 5;
+        const E =
+          diskParams[o] *
+          (0.8 + 0.2 * Math.sin(diskParams[o + 1] + diskParams[o + 2] * t)) *
+          (0.9 + 0.1 * Math.sin(diskParams[o + 3] - diskParams[o + 4] * t));
+        const v = 1 - Math.exp(-E); // tone-map
+        const heat = Math.min(1, E * 0.75);
+        const q = diskIdx[k] * 4;
+        d[q] = 255;
+        d[q + 1] = 150 + 98 * heat;
+        d[q + 2] = 64 + 164 * heat;
+        d[q + 3] = Math.min(255, Math.round(v * 1.5 * 255));
+      }
+      spriteCtx.putImageData(spriteImg, 0, 0);
     };
 
     const drawBlackHole = (t: number) => {
@@ -234,8 +310,14 @@ export default function Galaxy() {
       const r = Math.min(width, height) * BH.fr;
       // the sprite scales cleanly on blit, so rebuild only on large jumps
       if (!sprite || r > spriteR * 1.3 || r < spriteR * 0.5) {
-        sprite = buildGargantua(r);
+        buildGargantua(r);
         spriteR = r;
+      }
+      if (!sprite) return;
+      // refresh the flowing gas at ~30fps; the blit itself runs every frame
+      if (diskT < 0 || Math.abs(t - diskT) > 0.033) {
+        updateDiskTexture(t);
+        diskT = t;
       }
       const shimmer = 0.85 + 0.15 * Math.sin(t * 0.8);
       const unit = r / B_CRIT;
@@ -250,7 +332,7 @@ export default function Galaxy() {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(ROLL);
-      ctx.globalAlpha = 0.92 + 0.08 * Math.sin(t * 0.8);
+      ctx.globalAlpha = 0.94 + 0.06 * Math.sin(t * 0.8);
       ctx.drawImage(
         sprite,
         -SPRITE_HW * unit,
@@ -259,21 +341,6 @@ export default function Galaxy() {
         2 * SPRITE_HH * unit
       );
       ctx.globalAlpha = 1;
-
-      // hot plasma knots riding the near side of the disk
-      for (const phase of [0, 2.6]) {
-        const a = t * 0.7 + phase;
-        if (Math.sin(a) <= 0) continue; // behind the hole
-        const hx = Math.cos(a) * r * 1.55;
-        const hy = Math.sin(a) * r * 1.55 * 0.08;
-        const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.3);
-        hot.addColorStop(0, `rgba(255,246,214,${0.5 * shimmer})`);
-        hot.addColorStop(1, "rgba(255,200,120,0)");
-        ctx.fillStyle = hot;
-        ctx.beginPath();
-        ctx.arc(hx, hy, r * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
       ctx.restore();
 
       // orbiting glint riding the photon ring
