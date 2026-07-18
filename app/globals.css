@@ -1,26 +1,99 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-sora);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  --color-base: #070b15;
+  --color-base-soft: #0b1120;
+  --color-card: #101830;
+  --color-line: #1e293f;
+  --color-ink: #e7ecf6;
+  --color-ink-dim: #94a3b8;
+  --animate-blob: blob 22s ease-in-out infinite;
+  --animate-blob-slow: blob 30s ease-in-out infinite reverse;
+  --animate-pan: pan 8s linear infinite;
+
+  @keyframes blob {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(6rem, -4rem) scale(1.15);
+    }
+    66% {
+      transform: translate(-4rem, 5rem) scale(0.9);
+    }
+  }
+  @keyframes pan {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 200% 50%;
+    }
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+}
+
+/* Animated gradient text — teal → violet → amber */
+.gradient-text {
+  background: linear-gradient(
+    90deg,
+    #2dd4bf,
+    #a78bfa,
+    #fbbf24,
+    #a78bfa,
+    #2dd4bf
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-pan);
+}
+
+.gradient-border {
+  position: relative;
+  background:
+    linear-gradient(var(--color-card), var(--color-card)) padding-box,
+    linear-gradient(120deg, #2dd4bf66, #a78bfa66, #fbbf2466) border-box;
+  border: 1px solid transparent;
+}
+
+/* Subtle dot grid for the hero */
+.dot-grid {
+  background-image: radial-gradient(#33415577 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

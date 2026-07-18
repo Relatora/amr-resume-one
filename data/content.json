@@ -1,0 +1,304 @@
+{
+  "personal": {
+    "name": "Amr Abdallah",
+    "title": "Software & Database Engineer · Team Lead",
+    "email": "relatora@gmail.com",
+    "website": "https://relatora.me",
+    "location": "Ontario, Canada",
+    "summary": "Dedicated and efficient full-stack developer and software team lead. I merge a passion for usability and user experience with deep technical knowledge to engineer great digital experiences on both the front end and back end. My recent work spans Azure cloud architecture — MQTT brokers, web services, app services, and Kusto DB — AI-assisted development workflows, and integrating AI platforms into engineering operations. I'm a self-motivated problem solver who thrives on the latest technologies."
+  },
+  "experience": [
+    {
+      "id": "alumapower",
+      "title": "Software and Database Engineer — Software Team Lead",
+      "org": "AlumaPower",
+      "start": "Apr 2021",
+      "end": "Present",
+      "type": "Full Time",
+      "summary": "Leading software engineering for internal operations: cloud architecture on Azure, databases, web/desktop/mobile apps, and AI-integrated workflows.",
+      "bullets": [
+        "Lead the software team: planning, coordination, code review, and mentoring across projects of varying size and complexity.",
+        "Architect and implement Azure cloud solutions including MQTT brokers, web services, app services, and Kusto DB (Azure Data Explorer) for telemetry and analytics.",
+        "Integrated Monolith AI into engineering workflows, connecting data pipelines and platform services.",
+        "Adopted an AI-assisted development workflow ('vibe coding') to accelerate delivery while maintaining code quality through review and testing.",
+        "Built testing solutions for AlumaPower's products and teams — unit, regression, and end-to-end test frameworks.",
+        "Design, architect, and implement databases for internal desktop, mobile, and web applications.",
+        "Assemble requirements from users and translate them into logical and physical specifications.",
+        "Analyze performance and dependability of designs; optimize architecture and develop data, process, and network models.",
+        "Develop, install, integrate, and operate computer-based systems, including mobile applications, to plan and schedule.",
+        "Technical writing and documentation of software."
+      ]
+    },
+    {
+      "id": "industrial-web-apps",
+      "title": "IT Project Manager",
+      "org": "Industrial Web Apps",
+      "start": "Apr 2021",
+      "end": "Jul 2022",
+      "type": "Full Time",
+      "summary": "Directed project teams through the full development lifecycle, keeping simultaneous software projects on time and on spec.",
+      "bullets": [
+        "Organized teams, time, and resources so projects met stated requirements and were completed on time.",
+        "Provided direction to project teams for all phases of the development lifecycle.",
+        "Supervised timely completion of software projects, contributing technical expertise and leadership to resolve issues.",
+        "Proactively identified obstacles within project teams and proposed creative solutions.",
+        "Lent experience and guidance to project conception and feasibility analyses.",
+        "Maintained the development backlog and prioritized existing and incoming tasks.",
+        "Worked closely with development and deployment teams to deliver simultaneous projects.",
+        "Developed and peer-reviewed multiple projects."
+      ]
+    },
+    {
+      "id": "lambton-professor",
+      "title": "Professor",
+      "org": "Lambton College",
+      "start": "Sep 2021",
+      "end": "Present",
+      "type": "Part Time",
+      "summary": "Teaching Front-End Web Development I (HTML5, CSS3) and II (JavaScript, jQuery, intro to Vue and React).",
+      "bullets": [
+        "Teach Front-End Web Development I covering HTML5 and CSS3.",
+        "Teach Front-End Web Development II covering JavaScript and jQuery with an introduction to Vue and React."
+      ]
+    },
+    {
+      "id": "eyelook",
+      "title": "Full-stack Developer",
+      "org": "Eye-Look Media",
+      "start": "Nov 2020",
+      "end": "May 2021",
+      "type": "Full Time",
+      "summary": "Digital signage platform managing client media across kiosk networks (Laravel, Vue, MySQL, NodeJS microservices).",
+      "bullets": [
+        "Developed a digital signage portal that lets clients like Canadian Tire intelligently distribute and control media across screens in all their branches, using a Laravel, Vue, and MySQL stack.",
+        "Built a client-access progressive web app (PWA) communicating over WebSocket.",
+        "Created NodeJS microservices for recursive file parsing, socket bridging, and automation."
+      ]
+    },
+    {
+      "id": "avaros",
+      "title": "Software Developer",
+      "org": "Avaros EMR",
+      "start": "May 2020",
+      "end": "Aug 2020",
+      "type": "Co-op",
+      "summary": "Patient online-booking frontend and scheduler backend for an electronic medical records platform.",
+      "bullets": [
+        "Built the patient online-booking frontend with ReactJS, React Hooks, RxJS, and TypeScript — endpoints and numerous components.",
+        "Integrated Twilio SMS webhooks into the scheduler backend using Go, with corresponding PostgreSQL migrations.",
+        "Delivered bug fixes and functionality additions to Oscar EMR using Java, JSP, CSS, MariaDB, and JavaScript.",
+        "Configured a complex Linux development environment; authored a highly interactive 138-page document detailing WebSocket server logic flow."
+      ]
+    },
+    {
+      "id": "lambton-research",
+      "title": "Researcher",
+      "org": "Lambton College Applied Research",
+      "start": "2019",
+      "end": "Present",
+      "type": "Contracts",
+      "summary": "Applied research and solution engineering for industry clients — IoT, microservices, mobile, and full-stack builds.",
+      "bullets": [
+        "Researched OrderEase (an Amazon-like business): authored an investor-facing document and an analysis of their software architecture's strengths and weaknesses.",
+        "Implemented a microservices-based digital signage solution for EyeLook Media running on Raspberry Pi 4, dynamically generating HTML/JS/CSS from server payloads with date/time display rules.",
+        "Implemented an internal MERN-stack system for Procor to handle day-to-day railcar operations.",
+        "Developed key components for a hockey team's React Native mobile app.",
+        "Created a full-stack rental-timeline project (NodeJS, ExpressJS, ReactJS, MySQL) displaying product rentals on daily, weekly, and monthly views.",
+        "Engineered a solution for Just Vertical (vertical hydroponics): a Flutter app communicating via WebSocket with an AWS Lambda microservice bridging to a Quasar/Electron (VueJS) app on an embedded Raspberry Pi — scheduling irrigation and lighting while dashboarding humidity and temperature.",
+        "For Tertec: built interactive drag-and-drop IoT components using Vue JS, D3 JS, and Rete JS.",
+        "Tutored students in Python, database development, Java SE/EE, C#, JavaScript, program logic and design, and NodeJS."
+      ]
+    },
+    {
+      "id": "modern-education",
+      "title": "IGCSE ICT Teacher",
+      "org": "Modern Education Schools",
+      "start": "2016",
+      "end": "2018",
+      "type": "Full Time",
+      "summary": "Created the ICT syllabus and built internal school solutions including a grading system.",
+      "bullets": [
+        "Gathered resources and created a syllabus covering Microsoft Office, Scratch programming, flow charts, and HTML/CSS web development.",
+        "Built numerous internal solutions for the school, including a grading system."
+      ]
+    },
+    {
+      "id": "modern-schools-egypt",
+      "title": "American System ICT Teacher",
+      "org": "Modern Schools of Egypt",
+      "start": "2006",
+      "end": "2016",
+      "type": "Full Time",
+      "summary": "A decade of ICT teaching plus internal software solutions for the school.",
+      "bullets": [
+        "Created and delivered an ICT syllabus based on Microsoft Office, Scratch programming, flow charts, and HTML/CSS.",
+        "Built numerous internal software solutions for the school."
+      ]
+    },
+    {
+      "id": "gulf-network",
+      "title": "Software Developer",
+      "org": "Gulf Network Solutions",
+      "start": "2003",
+      "end": "2006",
+      "type": "Full Time",
+      "summary": "Sales-force automation, promotional card-slip logic for McDonald's Egypt, and internal tooling.",
+      "bullets": [
+        "Developed a Sales Force Automation solution using Pocket PC terminals with MS SQL replication.",
+        "Implemented the randomization and categorization logic for McDonald's Egypt e-learning promotional card-slip batches.",
+        "Built utilities, services, and tools for internal use."
+      ]
+    },
+    {
+      "id": "middle-east-network",
+      "title": "Software Developer",
+      "org": "Middle East Network Solutions",
+      "start": "2000",
+      "end": "2003",
+      "type": "Full Time",
+      "summary": "Banking and call-center solutions, including team leadership on dynamic call-center delivery.",
+      "bullets": [
+        "Developed, as part of a team, an SMS-based banking solution for the National Bank of Egypt.",
+        "Team leader for a dynamic automated call-center solution at Misr for Custody and Stock Depository; instructed a team to fully adapt the solution to their system.",
+        "Developed Goldi's dynamic call-center solution."
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "id": "cloud",
+      "category": "Cloud & Architecture",
+      "items": [
+        "Azure (App Services, Web Services)",
+        "MQTT Brokers",
+        "Kusto DB (Azure Data Explorer)",
+        "AWS",
+        "AWS Lambda",
+        "Microservices",
+        "REST APIs",
+        "WebSockets",
+        "Three-tier Architecture",
+        "Nginx / Apache / IIS",
+        "Redis"
+      ]
+    },
+    {
+      "id": "ai",
+      "category": "AI & Modern Workflow",
+      "items": [
+        "Monolith AI Integration",
+        "AI-assisted Development (Vibe Coding)",
+        "Claude Code",
+        "Prompt-driven Prototyping"
+      ]
+    },
+    {
+      "id": "frontend",
+      "category": "Front End",
+      "items": [
+        "JavaScript / TypeScript",
+        "React",
+        "Vue.js",
+        "Svelte",
+        "SolidJS",
+        "Next.js",
+        "Gatsby",
+        "RxJS",
+        "GSAP",
+        "jQuery",
+        "HTML5",
+        "CSS3 / Tailwind"
+      ]
+    },
+    {
+      "id": "backend",
+      "category": "Back End & Languages",
+      "items": [
+        "Node.js / Express",
+        "C# / ASP.NET",
+        "Java SE/EE / Spring Boot",
+        "Go",
+        "Python",
+        "PHP / Laravel",
+        "Bun",
+        "Meteor"
+      ]
+    },
+    {
+      "id": "mobile",
+      "category": "Mobile & Embedded",
+      "items": [
+        "Flutter / Dart",
+        "React Native",
+        "Android",
+        "iOS",
+        "Raspberry Pi",
+        "Electron / Quasar",
+        "IoT"
+      ]
+    },
+    {
+      "id": "databases",
+      "category": "Databases",
+      "items": [
+        "MSSQL",
+        "PostgreSQL",
+        "MySQL / MariaDB",
+        "MongoDB",
+        "Oracle DB",
+        "DB2",
+        "Kusto",
+        "Database Design & Modeling"
+      ]
+    },
+    {
+      "id": "practices",
+      "category": "Leadership & Practices",
+      "items": [
+        "Team Leadership",
+        "Project Management",
+        "Agile / Scrum",
+        "Unit / Regression / E2E Testing",
+        "Code Review",
+        "Technical Writing",
+        "Git",
+        "Requirements Engineering"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "lambton",
+      "credential": "Computer Software & Database Development",
+      "institution": "Lambton College, Sarnia, ON",
+      "start": "Jan 2019",
+      "end": "Aug 2020",
+      "details": [
+        "Cumulative GPA 3.89/4.0 (terms: 3.73, 4.0, 4.0)",
+        "Three-tier MVC web applications in Java and C#; MERN, AWS, and Flutter apps.",
+        "Database design and maintenance across Oracle, MySQL, MariaDB, PostgreSQL, MongoDB, and DB2.",
+        "Agile and Waterfall project management; Android and iOS mobile development."
+      ]
+    },
+    {
+      "id": "microsoft-academy",
+      "credential": "Microsoft Partner Academy Courses",
+      "institution": "Microsoft",
+      "start": "2002",
+      "end": "2003",
+      "details": [
+        "Systems Architecture and Networking, Project Management, Microsoft Solutions Framework, Security, Technical Writing, and Vision 2 Results soft-skills training."
+      ]
+    },
+    {
+      "id": "october-university",
+      "credential": "Bachelor of Business Administration",
+      "institution": "6th of October University, Egypt",
+      "start": "1996",
+      "end": "1999",
+      "details": [
+        "Specialization: Finance · Minor: Economics · Degree: Very Good · Graduation Project: Distinct"
+      ]
+    }
+  ]
+}
