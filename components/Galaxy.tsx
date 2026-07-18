@@ -148,6 +148,23 @@ export default function Galaxy() {
         ctx.arc(0, 0, r * 1.02, half === "back" ? 2 * Math.PI : Math.PI, half === "back" ? Math.PI : 0, true);
         ctx.closePath();
         ctx.fill();
+
+        // hot plasma blobs orbiting the horizon — drawn in the disk's own
+        // squashed coordinate space so they stay flattened into its plane
+        for (const phase of [0, 2.6]) {
+          const a = t * 0.7 + phase;
+          const inFront = Math.sin(a) > 0;
+          if ((half === "front") !== inFront) continue;
+          const hx = Math.cos(a) * r * 1.7;
+          const hy = Math.sin(a) * r * 1.7;
+          const hot = ctx.createRadialGradient(hx, hy, 0, hx, hy, r * 0.55);
+          hot.addColorStop(0, `rgba(255,240,200,${0.6 * shimmer})`);
+          hot.addColorStop(1, "rgba(255,200,120,0)");
+          ctx.fillStyle = hot;
+          ctx.beginPath();
+          ctx.arc(hx, hy, r * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+        }
         ctx.restore();
       };
 
@@ -170,9 +187,18 @@ export default function Galaxy() {
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
 
-      // photon ring
-      ctx.strokeStyle = `rgba(255,236,200,${0.9 * shimmer})`;
-      ctx.lineWidth = 2.2;
+      // photon ring — lensed light with a bright glint orbiting the horizon
+      if (typeof ctx.createConicGradient === "function") {
+        const sweep = ctx.createConicGradient(t * 1.1, cx, cy);
+        sweep.addColorStop(0, `rgba(255,246,220,${0.95 * shimmer})`);
+        sweep.addColorStop(0.16, `rgba(255,222,165,${0.5 * shimmer})`);
+        sweep.addColorStop(0.6, `rgba(255,210,150,${0.28 * shimmer})`);
+        sweep.addColorStop(1, `rgba(255,246,220,${0.95 * shimmer})`);
+        ctx.strokeStyle = sweep;
+      } else {
+        ctx.strokeStyle = `rgba(255,236,200,${0.9 * shimmer})`;
+      }
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.04, 0, Math.PI * 2);
       ctx.stroke();
