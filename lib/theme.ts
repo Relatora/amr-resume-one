@@ -22,7 +22,7 @@ export function useTheme() {
     try {
       localStorage.setItem(THEME_KEY, next ? "light" : "dark");
     } catch {
-      // storage unavailable — theme just won't persist
+      // storage unavailable - theme just won't persist
     }
     emit();
   }, []);

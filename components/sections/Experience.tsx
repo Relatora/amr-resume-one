@@ -66,7 +66,7 @@ function ExperienceCard({
           </div>
           <div className="flex items-center gap-2">
             <p className="font-mono text-xs text-ink-dim">
-              {entry.start} — {entry.end}
+              {entry.start} - {entry.end}
               <span className="ml-2 rounded-full border border-line px-2 py-0.5">
                 {entry.type}
               </span>

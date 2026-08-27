@@ -90,7 +90,7 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
           className="w-full rounded-lg border border-line bg-canvas px-4 py-3 text-sm outline-none transition focus:border-teal-400/60 focus:ring-2 focus:ring-teal-400/20"
         />
         {error && (
-          <p className="text-xs text-accent-rose">That&apos;s not it — try again.</p>
+          <p className="text-xs text-accent-rose">That&apos;s not it - try again.</p>
         )}
         <div className="flex gap-2">
           <button
@@ -129,12 +129,12 @@ function DemoInfoModal({ onClose }: { onClose: () => void }) {
       </p>
       <h2 className="font-display mt-2 text-2xl font-bold">Demo edit mode</h2>
       <p className="mt-3 text-sm leading-relaxed text-ink-dim">
-        This lets you play with the in-page editor — rearrange entries, change
+        This lets you play with the in-page editor - rearrange entries, change
         text, add or remove items.{" "}
         <span className="font-semibold text-ink">
           Nothing you change will be saved
         </span>{" "}
-        — it&apos;s here just to show off the editing capability. A Reset
+        - it&apos;s here just to show off the editing capability. A Reset
         button will appear so you can put everything back at any time.
       </p>
       <div className="mt-6 flex gap-2">

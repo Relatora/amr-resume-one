@@ -1,6 +1,6 @@
-# Amr Abdallah — Personal Resume Website
+# Amr Abdallah - Personal Resume Website
 
-The interactive resume of **Amr Abdallah**, Software & Database Engineer and Software Team Lead at AlumaPower — live at [relatora.me](https://relatora.me).
+The interactive resume of **Amr Abdallah**, Software & Database Engineer and Software Team Lead at AlumaPower - live at [relatora.me](https://relatora.me).
 
 I'm a full-stack engineer with 20+ years across the stack: from SMS banking solutions in the early 2000s to today's Azure cloud architecture (MQTT brokers, web services, app services, Kusto DB), AI-assisted development workflows, and Monolith AI platform integration. I lead a software team, teach front-end development at Lambton College, and have shipped products across web, mobile, desktop, embedded, and IoT.
 
@@ -8,11 +8,11 @@ This site is both my resume and a small showcase of how I like to build: content
 
 ## Highlights
 
-- **Animated, theme-aware UI** — dark/light modes, an animated galaxy starfield, gradient typography, wavy section separators, and scroll-staggered reveals built with Framer Motion.
-- **Content as data** — the entire resume lives in [`data/content.json`](data/content.json). No copy is hardcoded in components.
-- **In-page editing** — an owner mode (password-gated) edits every section through inline forms: add, remove, reorder, and rewrite without touching JSON.
-- **Demo mode** — visitors can try the editor safely; nothing persists, and a Reset button restores the original at any time.
-- **Hybrid persistence** — running locally, edits write straight back to `content.json`; on the deployed site they layer into `localStorage` with a one-click JSON export for committing later.
+- **Animated, theme-aware UI** - dark/light modes, an animated galaxy starfield, gradient typography, wavy section separators, and scroll-staggered reveals built with Framer Motion.
+- **Content as data** - the entire resume lives in [`data/content.json`](data/content.json). No copy is hardcoded in components.
+- **In-page editing** - an owner mode (password-gated) edits every section through inline forms: add, remove, reorder, and rewrite without touching JSON.
+- **Demo mode** - visitors can try the editor safely; nothing persists, and a Reset button restores the original at any time.
+- **Hybrid persistence** - running locally, edits write straight back to `content.json`; on the deployed site they layer into `localStorage` with a one-click JSON export for committing later.
 
 ## Stack
 
@@ -31,7 +31,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. In local dev, saves from the in-page editor write directly to `data/content.json` — commit and push to publish.
+Open http://localhost:3000. In local dev, saves from the in-page editor write directly to `data/content.json` - commit and push to publish.
 
 ## Project layout
 

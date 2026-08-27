@@ -1,5 +1,5 @@
 // Wavy separator between page sections. Translucent soft-canvas fill so the
-// band reads as tinted glass and the galaxy stays visible behind it — must
+// band reads as tinted glass and the galaxy stays visible behind it - must
 // match the Skills band's bg-canvas-soft/60.
 export default function WaveDivider({ flip = false }: { flip?: boolean }) {
   return (

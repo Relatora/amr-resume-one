@@ -4,5 +4,5 @@ try {
     document.documentElement.classList.add("light");
   }
 } catch {
-  // storage unavailable — default theme applies
+  // storage unavailable - default theme applies
 }

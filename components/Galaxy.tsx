@@ -34,7 +34,7 @@ const NEBULAE: Nebula[] = [
   { fx: 0.5, fy: 0.95, fr: 0.56, dark: "244,114,182", light: "251,146,60", phase: 4.2, speed: 0.06 },
 ];
 
-// Black hole placement/size as viewport fractions — shared between the
+// Black hole placement/size as viewport fractions - shared between the
 // renderer and the star loop (stars behind the event horizon are occluded).
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 
@@ -72,7 +72,7 @@ export default function Galaxy() {
     };
 
     const resize = () => {
-      // the canvas's CSS box, not window.innerWidth — the latter includes
+      // the canvas's CSS box, not window.innerWidth - the latter includes
       // the scrollbar and would skew drawing coordinates slightly (the
       // window fallback covers a detached canvas mid-HMR, which reads 0)
       width = canvas.clientWidth || window.innerWidth;
@@ -89,7 +89,7 @@ export default function Galaxy() {
         twinkleSpeed: 0.015 + Math.random() * 0.045,
         drift: 0.008 + Math.random() * 0.03,
       }));
-      // constellation pairs for the light theme — nearby stars, capped for perf
+      // constellation pairs for the light theme - nearby stars, capped for perf
       pairs = [];
       for (let i = 0; i < stars.length && pairs.length < 140; i++) {
         for (let j = i + 1; j < stars.length && pairs.length < 140; j++) {
@@ -128,7 +128,7 @@ export default function Galaxy() {
     // the shadow; rays that strike the disk plane record their hit point
     // (radius, azimuth) and static shading (emissivity falloff, Doppler
     // beaming). Each frame only the disk *texture* is recomputed from those
-    // maps — differentially rotating spiral turbulence — so the gas visibly
+    // maps - differentially rotating spiral turbulence - so the gas visibly
     // flows around the hole, and the lensed arch above the shadow animates
     // in sync because it is the same material seen twice.
     const B_CRIT = 2.6; // critical impact parameter → apparent shadow radius
@@ -190,7 +190,7 @@ export default function Galaxy() {
 
             const sideN = y * cosT + z * sinT;
             if (side * sideN < 0) {
-              // crossed the disk plane — interpolate the hit point
+              // crossed the disk plane - interpolate the hit point
               const k = side / (side - sideN);
               const hx = px0 + (x - px0) * k;
               const hy = py0 + (y - py0) * k;
@@ -256,7 +256,7 @@ export default function Galaxy() {
         } else if (cls[p] === 1) {
           const rr = hitR[p];
           const phi = hitPhi[p];
-          // Keplerian angular speed — inner gas laps the outer gas, which
+          // Keplerian angular speed - inner gas laps the outer gas, which
           // shears the turbulence into trailing spirals
           const omega = 2.4 / Math.pow(rr, 1.5);
           const o = count * 5;
@@ -282,7 +282,7 @@ export default function Galaxy() {
       diskT = -1;
     };
 
-    // Recompute only the disk texels from the traced maps — two counter-
+    // Recompute only the disk texels from the traced maps - two counter-
     // shearing spiral waves riding the Keplerian flow.
     const updateDiskTexture = (t: number) => {
       if (!spriteCtx || !spriteImg || !diskIdx || !diskParams) return;
@@ -413,7 +413,7 @@ export default function Galaxy() {
       const bhY = height * BH.fy;
       const bhR = Math.min(width, height) * BH.fr;
 
-      // constellation lines — light theme, only when cruising (not warping)
+      // constellation lines - light theme, only when cruising (not warping)
       if (light && warp < 2) {
         const lineAlpha = 0.13 * (1 - warp / 2);
         ctx.lineWidth = 0.7;

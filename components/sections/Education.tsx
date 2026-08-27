@@ -39,7 +39,7 @@ export default function Education() {
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="font-mono text-xs text-ink-dim">
-                  {entry.start} — {entry.end}
+                  {entry.start} - {entry.end}
                 </p>
                 {editMode && (
                   <span className="flex items-center gap-1">

@@ -5,12 +5,12 @@
     "email": "relatora@gmail.com",
     "website": "https://relatora.me",
     "location": "Ontario, Canada",
-    "summary": "Dedicated and efficient full-stack developer and software team lead. I merge a passion for usability and user experience with deep technical knowledge to engineer great digital experiences on both the front end and back end. My recent work spans Azure cloud architecture — MQTT brokers, web services, app services, and Kusto DB — AI-assisted development workflows, and integrating AI platforms into engineering operations. I'm a self-motivated problem solver who thrives on the latest technologies. "
+    "summary": "Dedicated and efficient full-stack developer and software team lead. I merge a passion for usability and user experience with deep technical knowledge to engineer great digital experiences on both the front end and back end. My recent work spans Azure cloud architecture - MQTT brokers, web services, app services, and Kusto DB - AI-assisted development workflows, and integrating AI platforms into engineering operations. I'm a self-motivated problem solver who thrives on the latest technologies. "
   },
   "experience": [
     {
       "id": "alumapower",
-      "title": "Software and Database Engineer — Software Team Lead",
+      "title": "Software and Database Engineer - Software Team Lead",
       "org": "AlumaPower",
       "start": "Apr 2021",
       "end": "Present",
@@ -21,7 +21,7 @@
         "Architect and implement Azure cloud solutions including MQTT brokers, web services, app services, and Kusto DB (Azure Data Explorer) for telemetry and analytics.",
         "Integrated Monolith AI into engineering workflows, connecting data pipelines and platform services.",
         "Adopted an AI-assisted development workflow ('vibe coding') to accelerate delivery while maintaining code quality through review and testing.",
-        "Built testing solutions for AlumaPower's products and teams — unit, regression, and end-to-end test frameworks.",
+        "Built testing solutions for AlumaPower's products and teams - unit, regression, and end-to-end test frameworks.",
         "Design, architect, and implement databases for internal desktop, mobile, and web applications.",
         "Assemble requirements from users and translate them into logical and physical specifications.",
         "Analyze performance and dependability of designs; optimize architecture and develop data, process, and network models.",
@@ -84,7 +84,7 @@
       "type": "Co-op",
       "summary": "Patient online-booking frontend and scheduler backend for an electronic medical records platform.",
       "bullets": [
-        "Built the patient online-booking frontend with ReactJS, React Hooks, RxJS, and TypeScript — endpoints and numerous components.",
+        "Built the patient online-booking frontend with ReactJS, React Hooks, RxJS, and TypeScript - endpoints and numerous components.",
         "Integrated Twilio SMS webhooks into the scheduler backend using Go, with corresponding PostgreSQL migrations.",
         "Delivered bug fixes and functionality additions to Oscar EMR using Java, JSP, CSS, MariaDB, and JavaScript.",
         "Configured a complex Linux development environment; authored a highly interactive 138-page document detailing WebSocket server logic flow."
@@ -97,14 +97,14 @@
       "start": "2019",
       "end": "Present",
       "type": "Contracts",
-      "summary": "Applied research and solution engineering for industry clients — IoT, microservices, mobile, and full-stack builds.",
+      "summary": "Applied research and solution engineering for industry clients - IoT, microservices, mobile, and full-stack builds.",
       "bullets": [
         "Researched OrderEase (an Amazon-like business): authored an investor-facing document and an analysis of their software architecture's strengths and weaknesses.",
         "Implemented a microservices-based digital signage solution for EyeLook Media running on Raspberry Pi 4, dynamically generating HTML/JS/CSS from server payloads with date/time display rules.",
         "Implemented an internal MERN-stack system for Procor to handle day-to-day railcar operations.",
         "Developed key components for a hockey team's React Native mobile app.",
         "Created a full-stack rental-timeline project (NodeJS, ExpressJS, ReactJS, MySQL) displaying product rentals on daily, weekly, and monthly views.",
-        "Engineered a solution for Just Vertical (vertical hydroponics): a Flutter app communicating via WebSocket with an AWS Lambda microservice bridging to a Quasar/Electron (VueJS) app on an embedded Raspberry Pi — scheduling irrigation and lighting while dashboarding humidity and temperature.",
+        "Engineered a solution for Just Vertical (vertical hydroponics): a Flutter app communicating via WebSocket with an AWS Lambda microservice bridging to a Quasar/Electron (VueJS) app on an embedded Raspberry Pi - scheduling irrigation and lighting while dashboarding humidity and temperature.",
         "For Tertec: built interactive drag-and-drop IoT components using Vue JS, D3 JS, and Rete JS.",
         "Tutored students in Python, database development, Java SE/EE, C#, JavaScript, program logic and design, and NodeJS."
       ]

@@ -54,7 +54,7 @@ export function TextArea({
   );
 }
 
-// Editable list of strings with add / remove / reorder — used for
+// Editable list of strings with add / remove / reorder - used for
 // experience bullets, skill items, and education details.
 export function StringListEditor({
   label,

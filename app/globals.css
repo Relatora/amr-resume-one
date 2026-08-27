@@ -7,7 +7,7 @@
 }
 
 @theme {
-  /* "canvas" not "base" — text-base is Tailwind's font-size utility */
+  /* "canvas" not "base" - text-base is Tailwind's font-size utility */
   --color-canvas: #070b15;
   --color-canvas-soft: #0b1120;
   --color-card: #101830;
@@ -16,7 +16,7 @@
   --color-ink-dim: #9daabd;
   /* dark text for on-gradient buttons, same in both themes */
   --color-on-accent: #06101c;
-  /* accent text colors — bright on dark, deep on light */
+  /* accent text colors - bright on dark, deep on light */
   --color-accent-teal: #2dd4bf;
   --color-accent-violet: #b1a0fc;
   --color-accent-amber: #fbbf24;
@@ -47,7 +47,7 @@
   }
 }
 
-/* Light theme — toggled by adding .light to <html> */
+/* Light theme - toggled by adding .light to <html> */
 html.light {
   --color-canvas: #f5f7fc;
   --color-canvas-soft: #e9edf6;
@@ -75,7 +75,7 @@ body {
   font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
 }
 
-/* Animated gradient text — teal → violet → amber */
+/* Animated gradient text - teal → violet → amber */
 .gradient-text {
   background: linear-gradient(
     90deg,

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
 
-// Client-side friction gate only — not real security. To be replaced with
+// Client-side friction gate only - not real security. To be replaced with
 // proper auth in a later phase.
 const PASSWORD = "canu";
 const SESSION_KEY = "resume-authed";

@@ -27,7 +27,7 @@ export default function Contact() {
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-dim sm:text-base">
           Whether it&apos;s cloud architecture, a full-stack product, or an
-          AI-accelerated workflow — I&apos;d love to hear about it.
+          AI-accelerated workflow - I&apos;d love to hear about it.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a

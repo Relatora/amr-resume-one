@@ -20,7 +20,7 @@ const sora = Sora({
 });
 
 export const metadata: Metadata = {
-  title: `${content.personal.name} — ${content.personal.title}`,
+  title: `${content.personal.name} - ${content.personal.title}`,
   description: content.personal.summary,
 };
 
