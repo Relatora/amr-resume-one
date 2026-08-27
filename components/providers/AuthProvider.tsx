@@ -2,9 +2,11 @@
 
 import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
 
-// Client-side friction gate only - not real security. To be replaced with
-// proper auth in a later phase.
-const PASSWORD = "canu";
+// Client-side friction gate only - not real security. NEXT_PUBLIC_ values are
+// inlined into the browser bundle at build time, so this password is readable
+// by anyone who opens devtools; it only keeps casual visitors out of edit mode.
+// To be replaced with proper auth in a later phase.
+const PASSWORD = process.env.NEXT_PUBLIC_EDIT_PASSWORD;
 const SESSION_KEY = "resume-authed";
 
 // sessionStorage as an external store so hydration stays consistent.
@@ -29,6 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const login = useCallback((password: string) => {
+    // No password configured (missing .env or Vercel env var): stay locked
+    // rather than letting an empty string through.
+    if (!PASSWORD) return false;
     if (password === PASSWORD) {
       sessionStorage.setItem(SESSION_KEY, "1");
       emit();
