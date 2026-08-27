@@ -1,6 +1,6 @@
 # Amr Abdallah - Personal Resume Website
 
-The interactive resume of **Amr Abdallah**, Software & Database Engineer and Software Team Lead at AlumaPower - live at [relatora.me](https://relatora.me).
+The interactive resume of **Amr Abdallah**, Software & Database Engineer and Software Team Lead at AlumaPower - [live](https://amr-resume-one.vercel.app/).
 
 I'm a full-stack engineer with 20+ years across the stack: from SMS banking solutions in the early 2000s to today's Azure cloud architecture (MQTT brokers, web services, app services, Kusto DB), AI-assisted development workflows, and Monolith AI platform integration. I lead a software team, teach front-end development at Lambton College, and have shipped products across web, mobile, desktop, embedded, and IoT.
 

@@ -37,12 +37,11 @@ export default function Contact() {
             {personal.email}
           </a>
           <a
-            href={personal.website}
-            target="_blank"
-            rel="noreferrer"
+            href="/resume"
+            download
             className="press rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover-veil"
           >
-            {personal.website.replace(/^https?:\/\//, "")}
+            Download resume (PDF)
           </a>
         </div>
         <p className="mt-16 text-xs text-ink-dim">

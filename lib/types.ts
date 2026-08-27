@@ -2,7 +2,7 @@ export interface Personal {
   name: string;
   title: string;
   email: string;
-  website: string;
+  resume: string;
   location: string;
   summary: string;
 }

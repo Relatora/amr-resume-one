@@ -64,12 +64,11 @@ export default function Hero() {
             Get in touch
           </a>
           <a
-            href={personal.website}
-            target="_blank"
-            rel="noreferrer"
+            href="/resume"
+            download
             className="press rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink transition hover:border-teal-400/50 hover-veil"
           >
-            {personal.website.replace(/^https?:\/\//, "")}
+            Download resume (PDF)
           </a>
           {editMode && (
             <EditButton
