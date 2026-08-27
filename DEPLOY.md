@@ -51,6 +51,24 @@ npx vercel --prod
 Drop `--prod` for a preview deployment on a throwaway URL - worth doing first when the
 change is risky.
 
+## Environment variables
+
+One variable, `NEXT_PUBLIC_EDIT_PASSWORD`, unlocks the in-page editor's "Owner access"
+prompt. `.env.example` documents it; `.env` holds the real value locally and is gitignored.
+
+```bash
+cp .env.example .env
+```
+
+For the deployed site, set the same variable under **Settings > Environment Variables** in
+the Vercel project, then redeploy - `NEXT_PUBLIC_` values are inlined at build time, so
+changing it does not take effect until the next build. If the variable is missing the gate
+simply stays locked and no one can enter edit mode.
+
+Note that `NEXT_PUBLIC_` ships the value to the browser. This is a friction gate to keep
+casual visitors out of edit mode, not a secret: anyone can read it in devtools. Real
+protection would need the check moved to the server.
+
 ## Checks worth running before a push
 
 ```bash
@@ -86,4 +104,4 @@ one piece that behaves differently in production.
   permanent, use the editor's JSON export (or edit `data/content.json` directly), commit the
   file, and push.
 - **Node version** is whatever the Vercel project has configured; the app has no other
-  runtime requirements and needs no environment variables.
+  runtime requirements.
