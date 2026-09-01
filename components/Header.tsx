@@ -78,7 +78,7 @@ function ResetButton() {
 
 function EditControls() {
   const { mode, setMode, setModal } = useEditor();
-  const { authed } = useAuth();
+  const { authed, logout } = useAuth();
   const { demoDirty, resetDemo } = useContent();
 
   if (mode === "real") {
@@ -90,6 +90,15 @@ function EditControls() {
           className="cursor-pointer rounded-md bg-gradient-to-r from-teal-400 to-violet-400 px-3 py-1.5 text-xs font-semibold text-on-accent transition hover:opacity-90"
         >
           Done editing
+        </button>
+        <button
+          onClick={() => {
+            logout();
+            setMode("off");
+          }}
+          className="hover-veil cursor-pointer rounded-md border border-line px-3 py-1.5 text-xs text-ink-dim transition"
+        >
+          Log out
         </button>
       </div>
     );
@@ -123,6 +132,15 @@ function EditControls() {
       >
         ✎ Edit
       </button>
+      {authed && (
+        <button
+          onClick={logout}
+          title="Lock editing on this device"
+          className="hover-veil cursor-pointer rounded-md border border-line px-3 py-1.5 text-xs text-ink-dim transition"
+        >
+          Log out
+        </button>
+      )}
       <button
         onClick={() => setModal("demo-info")}
         className="cursor-pointer rounded-md border border-violet-400/40 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-accent-violet transition hover:bg-violet-400/20"
@@ -145,7 +163,7 @@ export default function Header() {
     >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         <a href="#top" className="font-display text-lg font-bold">
-          Amr<span className="gradient-text">.</span>
+          Amr
         </a>
 
         <nav className="hidden items-center gap-6 md:flex">

@@ -47,12 +47,13 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
   const { login } = useAuth();
   const { setMode } = useEditor();
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(password)) {
+    if (login(password, remember)) {
       setMode("real");
       onClose();
     } else {
@@ -92,6 +93,15 @@ function PasswordModal({ onClose }: { onClose: () => void }) {
         {error && (
           <p className="text-xs text-accent-rose">That&apos;s not it - try again.</p>
         )}
+        <label className="flex cursor-pointer items-center gap-2 text-xs text-ink-dim">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => setRemember(e.target.checked)}
+            className="h-4 w-4 cursor-pointer accent-teal-400"
+          />
+          Keep me signed in on this device
+        </label>
         <div className="flex gap-2">
           <button
             type="submit"
