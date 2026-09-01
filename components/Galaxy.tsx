@@ -147,7 +147,25 @@ export default function Galaxy() {
     const BASE_CLAMP = 5.0; // outlier ceiling for grazing rays at the rim
     const TURB_NORM = 0.3876; // mean of the three wave envelopes, so depth != dimming
     const RING_OMEGA = 2.4 / Math.pow(3.0, 1.5); // inner-edge orbital rate, drives ring shimmer
-    const STRIDE = 12; // floats per animated texel
+    const LOOP_T = 30; // animation period, seconds
+    const STRIDE = 13; // floats per animated texel
+
+    // The disk's waves are sin(a(r) + b(r)t) with b the Keplerian rate, so the
+    // pattern's SPATIAL frequency across the disk is a' + b'(r)t - it grows
+    // without bound as the page stays open. Past a few minutes it exceeds one
+    // cycle per texel and the gas aliases into moire and speckle, which is what
+    // made the hole look dead after a tab sat in the background.
+    //
+    // The cure is to make the animation exactly periodic: quantise every
+    // temporal frequency to a whole number of cycles per LOOP_T, then feed in a
+    // wrapped time. Nothing can then shear further than it does at t = LOOP_T,
+    // and the wrap is seamless because every wave is back where it started.
+    const qz = (b: number) => {
+      const base = (2 * Math.PI) / LOOP_T;
+      const n = Math.round(b / base);
+      return (n === 0 ? Math.sign(b) || 1 : n) * base;
+    };
+    const RING_SHIMMER = qz(6 * RING_OMEGA);
 
     let sprite: HTMLCanvasElement | null = null;
     let spriteCtx: CanvasRenderingContext2D | null = null;
@@ -307,15 +325,16 @@ export default function Galaxy() {
         params[o] = sc;
         params[o + 1] = db;
         params[o + 2] = rr * 5.5 - 2 * phi; // wave 1 spatial phase
-        params[o + 3] = 2.0 * omega; //        ...temporal frequency
+        params[o + 3] = qz(2.0 * omega); //    ...temporal frequency
         params[o + 4] = rr * 9.0 + 5 * phi + 1.7; // wave 2
-        params[o + 5] = -5.0 * omega;
+        params[o + 5] = qz(-5.0 * omega);
         params[o + 6] = rr * 2.3 - phi + 0.6; // wave 3
-        params[o + 7] = 1.1 * omega;
+        params[o + 7] = qz(1.1 * omega);
         params[o + 8] = phi; // hot-spot reference azimuth
-        params[o + 9] = omega;
+        params[o + 9] = qz(1.9 * omega); // hot spot 1 rate
+        params[o + 12] = qz(3.1 * omega); // hot spot 2 rate
         params[o + 10] = ri;
-        params[o + 11] = 3 * ringPhi[p] - 0; // ring shimmer phase
+        params[o + 11] = 3 * ringPhi[p]; // ring shimmer phase
         count++;
       }
 
@@ -336,6 +355,7 @@ export default function Galaxy() {
     // rates, plus the photon ring's shimmer.
     const updateDiskTexture = (t: number) => {
       if (!spriteCtx || !spriteImg || !texIdx || !texParams) return;
+      t -= LOOP_T * Math.floor(t / LOOP_T); // bounded: the shear cannot run away
       const d = spriteImg.data;
       const prm = texParams;
       for (let k = 0; k < texCount; k++) {
@@ -348,10 +368,9 @@ export default function Galaxy() {
           const w2 = Math.sin(prm[o + 4] + prm[o + 5] * t);
           const w3 = Math.sin(prm[o + 6] + prm[o + 7] * t);
           const phi = prm[o + 8];
-          const om = prm[o + 9];
           // sharp orbiting hot spots - repeated squaring beats Math.pow here
-          const c1 = Math.cos(phi - 1.9 * om * t);
-          const c2 = Math.cos(phi - 3.1 * om * t + 2.4);
+          const c1 = Math.cos(phi - prm[o + 9] * t);
+          const c2 = Math.cos(phi - prm[o + 12] * t + 2.4);
           const a1 = c1 > 0 ? c1 : 0;
           const a2 = c2 > 0 ? c2 : 0;
           const p2 = a1 * a1, p4 = p2 * p2, p8 = p4 * p4;
@@ -363,7 +382,7 @@ export default function Galaxy() {
           E += db * turb * (1 + spot);
         }
         const ri = prm[o + 10];
-        if (ri > 0) E += ri * (0.82 + 0.18 * Math.sin(prm[o + 11] - 6 * RING_OMEGA * t));
+        if (ri > 0) E += ri * (0.82 + 0.18 * Math.sin(prm[o + 11] - RING_SHIMMER * t));
 
         const v = 1 - Math.exp(-E);
         // Gas in front of the hole must not be occluded by it: any ray that
