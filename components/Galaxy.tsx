@@ -424,35 +424,171 @@ export default function Galaxy() {
       // rim; the traced photon ring above is the real thing, so it is gone
     };
 
-    // The light theme's counterpart: a soft sun with a halo.
-    const drawSun = (t: number) => {
-      const cx = width * 0.8;
-      const cy = height * 0.22;
-      const r = Math.min(width, height) * 0.065;
-      const breathe = 0.9 + 0.1 * Math.sin(t * 0.6);
+    // The light theme's counterpart. On a near-white canvas you cannot signal
+    // brightness with brightness - white on white is invisible, which is why
+    // the old pale disc read as faint. Luminosity here comes from saturation,
+    // from a limb-darkened photosphere that behaves like an object, and from
+    // the star occluding the constellation behind it. The old version's hard
+    // 1.4px stroked ring is gone; that was the tell that made it look fake.
+    const SUN_FR = 0.065; // radius as a fraction of min(viewport)
+    const SUN_FX = 0.8;
+    const SUN_FY = 0.22;
+    const SUN_DISC = 1.06; // photosphere radius in units of R
 
-      const halo = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 4);
-      halo.addColorStop(0, `rgba(253,224,150,${0.5 * breathe})`);
-      halo.addColorStop(0.4, `rgba(251,191,120,${0.18 * breathe})`);
-      halo.addColorStop(1, "rgba(251,191,120,0)");
-      ctx.fillStyle = halo;
-      ctx.fillRect(cx - r * 4, cy - r * 4, r * 8, r * 8);
+    let sunSprite: HTMLCanvasElement | null = null;
+    let sunSpriteCtx: CanvasRenderingContext2D | null = null;
+    let sunSpriteR = 0;
+    let sunT = -1;
 
-      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      core.addColorStop(0, "rgba(255,252,240,0.95)");
-      core.addColorStop(1, "rgba(253,220,140,0.6)");
-      ctx.fillStyle = core;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
+    const sunCenter = () => ({
+      cx: width * SUN_FX,
+      cy: height * SUN_FY,
+      r: Math.min(width, height) * SUN_FR,
+    });
 
-      ctx.strokeStyle = `rgba(245,180,90,${0.35 * breathe})`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * 1.5, 0, Math.PI * 2);
-      ctx.stroke();
+    // Deterministic value noise - photosphere granulation.
+    const vnoise = (x: number, y: number) => {
+      const xi = Math.floor(x), yi = Math.floor(y);
+      const xf = x - xi, yf = y - yi;
+      const hsh = (a: number, b: number) => {
+        let n = (a * 374761393 + b * 668265263) | 0;
+        n = (n ^ (n >> 13)) * 1274126177;
+        return ((n ^ (n >> 16)) >>> 0) / 4294967296;
+      };
+      const u = xf * xf * (3 - 2 * xf);
+      const v = yf * yf * (3 - 2 * yf);
+      return (
+        hsh(xi, yi) * (1 - u) * (1 - v) + hsh(xi + 1, yi) * u * (1 - v) +
+        hsh(xi, yi + 1) * (1 - u) * v + hsh(xi + 1, yi + 1) * u * v
+      );
     };
 
+    // Only the photosphere needs per-pixel work, and it is small (~130px
+    // across), so it is baked into a sprite and refreshed a few times a
+    // second while the granulation churns. The corona is drawn with
+    // gradients every frame, which is essentially free.
+    const buildSun = (R: number, t: number) => {
+      const RD = R * SUN_DISC;
+      const size = Math.ceil(2 * RD + 4);
+      if (size < 4) return;
+      if (!sunSprite || sunSprite.width !== size) {
+        const c = document.createElement("canvas");
+        c.width = size;
+        c.height = size;
+        sunSprite = c;
+        sunSpriteCtx = c.getContext("2d");
+      }
+      if (!sunSpriteCtx) return;
+      const img = sunSpriteCtx.createImageData(size, size);
+      const d = img.data;
+      const mid = size / 2;
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const dx = x + 0.5 - mid, dy = y + 0.5 - mid;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > RD + 1.5) continue;
+          // antialiased limb
+          const e = Math.max(0, Math.min(1, (dist - (RD - 1)) / 2));
+          const cov = 1 - e * e * (3 - 2 * e);
+          if (cov <= 0.002) continue;
+          const u = Math.min(1, dist / RD);
+          // classic limb darkening: I/I0 = 1 - eps(1 - mu)
+          const mu = Math.sqrt(Math.max(0, 1 - u * u));
+          const limb = 1 - 0.62 * (1 - mu);
+          const g =
+            0.5 * vnoise(dx / (R * 0.16) + t * 0.05, dy / (R * 0.16) - t * 0.04) +
+            0.5 * vnoise(dx / (R * 0.07) - t * 0.09, dy / (R * 0.07) + t * 0.06);
+          const shade = limb * (0.93 + 0.14 * (g - 0.5));
+          const k = Math.pow(shade, 0.95);
+          const q = (y * size + x) * 4;
+          d[q] = 255;
+          d[q + 1] = 150 + 105 * k;
+          d[q + 2] = 40 + 200 * Math.pow(k, 2.6);
+          d[q + 3] = Math.round(Math.min(1, cov * (0.9 + 0.1 * k)) * 255);
+        }
+      }
+      sunSpriteCtx.putImageData(img, 0, 0);
+      sunSpriteR = R;
+    };
+
+    const drawSun = (t: number) => {
+      const { cx, cy, r } = sunCenter();
+      const breathe = 0.97 + 0.03 * Math.sin(t * 0.6);
+      const R = r * breathe;
+      const RC = R * 5.2;
+
+      // Corona: a tight collar plus a wide bloom, both saturated enough to
+      // register against #f5f7fc.
+      const collar = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.9);
+      collar.addColorStop(0, `rgba(255,214,190,${0.5 * breathe})`);
+      collar.addColorStop(0.45, `rgba(255,196,132,${0.2 * breathe})`);
+      collar.addColorStop(1, "rgba(255,186,110,0)");
+      ctx.fillStyle = collar;
+      ctx.fillRect(cx - R * 1.9, cy - R * 1.9, R * 3.8, R * 3.8);
+
+      const bloom = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, RC);
+      bloom.addColorStop(0, `rgba(255,190,120,${0.30 * breathe})`);
+      bloom.addColorStop(0.35, `rgba(253,186,116,${0.12 * breathe})`);
+      bloom.addColorStop(1, "rgba(251,191,120,0)");
+      ctx.fillStyle = bloom;
+      ctx.fillRect(cx - RC, cy - RC, RC * 2, RC * 2);
+
+      // Streamers: soft wedges that drift, so the corona is never a perfect
+      // circle. Cheap - a handful of gradient-filled triangles.
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let i = 0; i < 7; i++) {
+        const ang = (i / 7) * Math.PI * 2 + t * 0.05 + Math.sin(i * 2.3) * 0.4;
+        const len = RC * (0.55 + 0.3 * (0.5 + 0.5 * Math.sin(i * 1.7 + t * 0.13)));
+        const halfA = 0.16 + 0.07 * Math.sin(i * 3.1 + t * 0.09);
+        const gr = ctx.createRadialGradient(0, 0, R, 0, 0, len);
+        gr.addColorStop(0, `rgba(255,201,140,${0.13 * breathe})`);
+        gr.addColorStop(1, "rgba(255,201,140,0)");
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, len, ang - halfA, ang + halfA);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // A whisper of diffraction, well short of a hard lens-flare cross.
+      for (const [ang, len, wid, amp] of [
+        [0, 2.9, 0.30, 0.085],
+        [Math.PI / 2, 2.2, 0.26, 0.055],
+        [Math.PI, 2.9, 0.30, 0.085],
+        [-Math.PI / 2, 2.2, 0.26, 0.055],
+      ]) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(ang);
+        const L = R * len;
+        const gr = ctx.createLinearGradient(R * 0.9, 0, L, 0);
+        gr.addColorStop(0, `rgba(255,214,150,${amp * breathe})`);
+        gr.addColorStop(1, "rgba(255,214,150,0)");
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.moveTo(R * 0.9, -R * wid * 0.35);
+        ctx.lineTo(L, -R * wid);
+        ctx.lineTo(L, R * wid);
+        ctx.lineTo(R * 0.9, R * wid * 0.35);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Photosphere. Rebuilt a few times a second so the granulation churns;
+      // blitted every frame.
+      if (!sunSprite || Math.abs(R - sunSpriteR) > R * 0.06 || sunT < 0 || Math.abs(t - sunT) > 0.12) {
+        buildSun(R, t);
+        sunT = t;
+      }
+      if (sunSprite) {
+        const half = sunSprite.width / 2;
+        ctx.drawImage(sunSprite, cx - half, cy - half);
+      }
+    };
     const drawFrame = (animate: boolean, t: number) => {
       ctx.clearRect(0, 0, width, height);
       const light = isLight();
@@ -478,14 +614,28 @@ export default function Galaxy() {
       const bhX = width * BH.fx;
       const bhY = height * BH.fy;
       const bhR = Math.min(width, height) * BH.fr;
+      // the light theme's occluder
+      const sunX = width * SUN_FX;
+      const sunY = height * SUN_FY;
+      const sunR = Math.min(width, height) * SUN_FR * SUN_DISC;
 
       // constellation lines - light theme, only when cruising (not warping)
       if (light && warp < 2) {
         const lineAlpha = 0.13 * (1 - warp / 2);
         ctx.lineWidth = 0.7;
+        // The star is an opaque body: sketch lines must not run across its
+        // face, or it stops reading as something in front of the sky.
+        const sun = sunCenter();
+        const sunR = sun.r * SUN_DISC;
         for (const [i, j] of pairs) {
           const a = stars[i];
           const b = stars[j];
+          // skip any segment whose closest approach falls inside the disc
+          const vx = b.x - a.x;
+          const vy = b.y - a.y;
+          const len2 = vx * vx + vy * vy;
+          const u = len2 ? Math.max(0, Math.min(1, ((sun.cx - a.x) * vx + (sun.cy - a.y) * vy) / len2)) : 0;
+          if (Math.hypot(a.x + vx * u - sun.cx, a.y + vy * u - sun.cy) < sunR) continue;
           ctx.strokeStyle = `rgba(${rgb},${lineAlpha})`;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
@@ -501,6 +651,7 @@ export default function Galaxy() {
           if (s.x < -2) s.x = width + 2;
         }
         if (!light && Math.hypot(s.x - bhX, s.y - bhY) < bhR) continue;
+        if (light && Math.hypot(s.x - sunX, s.y - sunY) < sunR) continue;
         const alpha = maxAlpha * (0.35 + 0.65 * Math.abs(Math.sin(s.twinkle)));
 
         if (warp > 0.5) {
