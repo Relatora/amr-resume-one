@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Sora } from "next/font/google";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import content from "@/data/content.json";
 
@@ -41,6 +42,9 @@ export default function RootLayout({
         {/* Applies the saved theme before hydration, to avoid a flash */}
         <Script src="/theme-init.js" strategy="beforeInteractive" />
         {children}
+        {/* Cookieless page-view analytics. Only sends anything from a Vercel
+            production deployment, so local development stays silent. */}
+        <Analytics />
       </body>
     </html>
   );
