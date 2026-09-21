@@ -79,6 +79,12 @@ const NEBULAE: Nebula[] = [
   { fx: 0.5, fy: 0.95, fr: 0.56, dark: "244,114,182", light: "251,146,60", phase: 4.2, speed: 0.06 },
 ];
 
+// Scene feature switches. Comets are built and working but held back for now.
+const FEATURES = {
+  comets: false,
+  liveWeather: true, // light theme mirrors the visitor's real conditions
+};
+
 // Black hole placement/size as viewport fractions - shared between the
 // renderer and the star loop (stars behind the event horizon are occluded).
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
@@ -108,12 +114,34 @@ export default function Galaxy() {
     let clouds: Cloud[] = [];
     let rain: Drop[] = [];
     let prevT = -1; // for a real delta time, so motion is frame-rate independent
+    // Live conditions for the light theme. Defaults are what shows before the
+    // lookup lands, and what stays if it never does.
+    let weather = { rain: 0, snow: false, cloud: 0.7, wind: 0.2, label: "" };
+    let weatherAsked = false;
+    let rainSeeds: Float32Array | null = null;
     let raf = 0;
     let warp = 0;
     let scrollAccum = 0;
     let lastScrollY = window.scrollY;
 
     const isLight = () => document.documentElement.classList.contains("light");
+
+    // Only ask once, and only when the light sky is on screen - a dark-theme
+    // visitor should not pay for a request they will never see the effect of.
+    const ensureWeather = () => {
+      if (weatherAsked || !FEATURES.liveWeather) return;
+      weatherAsked = true;
+      fetch("/api/weather")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((w) => {
+          if (w && typeof w.rain === "number") {
+            weather = { rain: w.rain, snow: !!w.snow, cloud: w.cloud, wind: w.wind, label: w.label };
+          }
+        })
+        .catch(() => {
+          // keep the defaults; the backdrop must never depend on this
+        });
+    };
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -186,6 +214,7 @@ export default function Galaxy() {
       });
 
       const dropCount = Math.min(420, Math.floor((width * height) / 3400));
+      rainSeeds = new Float32Array(dropCount).map(() => Math.random());
       rain = Array.from({ length: dropCount }, () => {
         const z = Math.random();
         return {
@@ -290,11 +319,12 @@ export default function Galaxy() {
     // An overcast wash: cooler and heavier at the top, opening up toward the
     // horizon, which is what stops a grey sky reading as flat grey.
     const drawOvercast = () => {
+      const k = 0.35 + weather.cloud * 0.65; // clear skies stay pale
       const g = ctx.createLinearGradient(0, 0, 0, height);
-      g.addColorStop(0, "rgba(150,168,196,0.42)");
-      g.addColorStop(0.45, "rgba(176,190,214,0.26)");
-      g.addColorStop(0.78, "rgba(214,220,232,0.12)");
-      g.addColorStop(1, "rgba(236,238,244,0.02)");
+      g.addColorStop(0, `rgba(150,168,196,${(0.42 * k).toFixed(3)})`);
+      g.addColorStop(0.45, `rgba(176,190,214,${(0.26 * k).toFixed(3)})`);
+      g.addColorStop(0.78, `rgba(214,220,232,${(0.12 * k).toFixed(3)})`);
+      g.addColorStop(1, `rgba(236,238,244,0.02)`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, width, height);
     };
@@ -304,15 +334,18 @@ export default function Galaxy() {
     const drawClouds = (t: number, near: boolean) => {
       if (!moteSprites.length) return;
       const sprite = moteSprites[0];
+      // a clear sky keeps a wisp or two; an overcast one packs them in
+      const cover = 0.25 + weather.cloud * 1.15;
       for (const c of clouds) {
         if (near !== c.z >= 0.5) continue;
+        if (c.z > weather.cloud * 1.25 + 0.15) continue; // fewer clouds when clear
         const span = width + c.w * 2;
         const x = (((c.x - t * c.speed) % span) + span) % span - c.w;
         const y = c.y + scrollY * (0.04 + c.z * 0.4);
         for (const p of c.puffs) {
           // a touch of vertical breathing keeps the mass from looking rigid
           const bob = Math.sin(t * 0.12 + p.dx * 0.01) * c.h * 0.06;
-          ctx.globalAlpha = p.a * (0.6 + c.z * 0.4);
+          ctx.globalAlpha = p.a * (0.6 + c.z * 0.4) * cover;
           ctx.drawImage(
             sprite,
             x + p.dx - p.r,
@@ -329,33 +362,59 @@ export default function Galaxy() {
     // depth band, so the whole field is a handful of draw calls rather than
     // several hundred. Scrolling lengthens the streaks, reusing the warp idea.
     const drawRain = (dt: number, animate: boolean, gust: number) => {
-      const tilt = 0.18 + gust * 0.05; // leaning, and more so in a gust
+      // Real conditions drive the field: how much falls, how hard it leans,
+      // and whether it falls as snow.
+      const amount = weather.rain;
+      if (amount <= 0.001) return; // genuinely dry out there - draw nothing
+      const snow = weather.snow;
+      const tilt = snow
+        ? weather.wind * 0.25
+        : 0.1 + weather.wind * 0.45 + gust * 0.05;
+      const fallScale = snow ? 0.16 : 0.55 + amount * 0.75;
       for (const band of [0, 1, 2]) {
         const lo = band / 3;
         const hi = (band + 1) / 3;
         ctx.beginPath();
         let any = false;
-        for (const d of rain) {
+        for (let i = 0; i < rain.length; i++) {
+          const d = rain[i];
           if (d.z < lo || d.z >= hi) continue;
+          // thin the field by intensity using a fixed per-drop seed, so
+          // lighter rain drops drops rather than reshuffling the whole sky
+          if (rainSeeds && rainSeeds[i] > amount) continue;
           if (animate) {
-            d.y += d.speed * dt;
-            d.x += d.speed * dt * tilt;
+            d.y += d.speed * dt * fallScale;
+            d.x += d.speed * dt * fallScale * tilt;
+            if (snow) d.x += Math.sin(d.y * 0.02 + i) * 14 * dt;
             if (d.y > height + 20) {
               d.y = -20 - Math.random() * height * 0.2;
               d.x = Math.random() * (width + 200) - 100;
             }
             if (d.x > width + 100) d.x -= width + 200;
+            if (d.x < -100) d.x += width + 200;
           }
-          const L = d.len * (1 + gust * 0.9);
-          ctx.moveTo(d.x, d.y);
-          ctx.lineTo(d.x - L * tilt, d.y - L);
+          if (snow) {
+            // flakes are specks, not streaks
+            ctx.moveTo(d.x + 0.8, d.y);
+            ctx.arc(d.x, d.y, 0.8 + d.z * 1.4, 0, Math.PI * 2);
+          } else {
+            const L = d.len * (0.6 + amount * 0.7) * (1 + gust * 0.9);
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x - L * tilt, d.y - L);
+          }
           any = true;
         }
         if (!any) continue;
         const z = (lo + hi) / 2;
-        ctx.strokeStyle = `rgba(120,140,175,${(0.14 + z * 0.3).toFixed(3)})`;
-        ctx.lineWidth = 0.6 + z * 1.0;
-        ctx.stroke();
+        if (snow) {
+          // a cool mid-tone, so flakes read against bright sky and dark cloud alike
+          ctx.fillStyle = `rgba(178,197,224,${(0.5 + z * 0.4).toFixed(3)})`;
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = `rgba(120,140,175,${(0.12 + z * 0.3).toFixed(3)})`;
+          ctx.lineWidth = 0.6 + z * 1.0;
+          ctx.stroke();
+        }
       }
     };
 
@@ -980,6 +1039,7 @@ export default function Galaxy() {
       }
 
       buildMotes(light);
+      if (light) ensureWeather();
       if (light) {
         // Overcast sky: wash, then the sun diffused behind the cloud deck,
         // then far cloud. Near cloud goes on after the rain so some of the
@@ -987,7 +1047,7 @@ export default function Galaxy() {
         drawOvercast();
         // dimmed hard: through cloud this should read as a bright patch of
         // sky rather than a disc with a limb
-        ctx.globalAlpha = 0.42;
+        ctx.globalAlpha = 0.32 + (1 - weather.cloud) * 0.6;
         drawSun(t);
         ctx.globalAlpha = 1;
         drawClouds(t, false);
@@ -1061,7 +1121,7 @@ export default function Galaxy() {
         drawRain(dt, animate, gust);
         drawClouds(t, true);
         drawHaze(light);
-      } else {
+      } else if (FEATURES.comets) {
         drawComets(dt, animate);
       }
     };
