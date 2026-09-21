@@ -5,10 +5,26 @@ import { useEffect, useRef } from "react";
 interface Star {
   x: number;
   y: number;
+  z: number; // depth 0 = far, 1 = near; drives size, brightness and parallax
   r: number;
   twinkle: number;
   twinkleSpeed: number;
   drift: number;
+}
+
+// A mote of interstellar dust: large, barely-there, soft-edged. Depth makes
+// the near ones bigger, softer and faster, which is the cue that turns a flat
+// sheet of dots into something with distance in it.
+interface Dust {
+  x: number;
+  y: number;
+  z: number;
+  r: number;
+  a: number;
+  sway: number;
+  phase: number;
+  speed: number;
+  tint: number; // index into the mote sprites
 }
 
 interface ShootingStar {
@@ -56,7 +72,10 @@ export default function Galaxy() {
     let width = 0;
     let height = 0;
     let stars: Star[] = [];
+    let dust: Dust[] = [];
+    let moteSprites: HTMLCanvasElement[] = [];
     let pairs: Array<[number, number]> = [];
+    let scrollY = window.scrollY; // absolute offset, for parallax
     let shooting: ShootingStar | null = null;
     let raf = 0;
     let warp = 0;
@@ -67,6 +86,7 @@ export default function Galaxy() {
 
     const onScroll = () => {
       const y = window.scrollY;
+      scrollY = y;
       scrollAccum += Math.abs(y - lastScrollY);
       lastScrollY = y;
     };
@@ -80,15 +100,37 @@ export default function Galaxy() {
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(240, Math.floor((width * height) / 8000));
-      stars = Array.from({ length: count }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: Math.random() * 1.3 + 0.35,
-        twinkle: Math.random() * Math.PI * 2,
-        twinkleSpeed: 0.015 + Math.random() * 0.045,
-        drift: 0.008 + Math.random() * 0.03,
-      }));
+      const count = Math.min(260, Math.floor((width * height) / 7600));
+      stars = Array.from({ length: count }, () => {
+        // biased toward the far field, so the sky reads as mostly distant
+        const z = Math.pow(Math.random(), 1.6);
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          r: 0.3 + z * 1.45,
+          twinkle: Math.random() * Math.PI * 2,
+          twinkleSpeed: 0.015 + Math.random() * 0.045,
+          drift: 0.004 + z * 0.05, // near stars slide past faster
+        };
+      });
+
+      const dustCount = Math.min(95, Math.floor((width * height) / 15000));
+      dust = Array.from({ length: dustCount }, () => {
+        const z = Math.random();
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          r: 6 + z * 46,
+          a: 0.026 + (1 - z) * 0.042 + z * 0.062,
+          sway: 6 + Math.random() * 26,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.05 + Math.random() * 0.16,
+          tint: Math.floor(Math.random() * 3),
+        };
+      });
+      buildMotes();
       // constellation pairs for the light theme - nearby stars, capped for perf
       pairs = [];
       for (let i = 0; i < stars.length && pairs.length < 140; i++) {
@@ -98,6 +140,93 @@ export default function Galaxy() {
           if (dx * dx + dy * dy < 110 * 110) pairs.push([i, j]);
         }
       }
+    };
+
+    // One soft mote per tint, rendered once and stamped with drawImage. Doing
+    // this per particle per frame with createRadialGradient would be far too
+    // costly; a cached sprite makes the whole dust field nearly free.
+    const MOTE_DARK: Array<[number, number, number]> = [
+      [120, 170, 210],
+      [150, 130, 210],
+      [210, 160, 190],
+    ];
+    const MOTE_LIGHT: Array<[number, number, number]> = [
+      [90, 110, 150],
+      [110, 95, 155],
+      [150, 115, 135],
+    ];
+    let moteTheme = "";
+
+    const buildMotes = (light = isLight()) => {
+      const key = light ? "light" : "dark";
+      if (moteTheme === key && moteSprites.length) return;
+      moteTheme = key;
+      const size = 128;
+      moteSprites = (light ? MOTE_LIGHT : MOTE_DARK).map(([r, g, b]) => {
+        const c = document.createElement("canvas");
+        c.width = size;
+        c.height = size;
+        const cc = c.getContext("2d");
+        if (cc) {
+          const grad = cc.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+          grad.addColorStop(0, `rgba(${r},${g},${b},1)`);
+          grad.addColorStop(0.35, `rgba(${r},${g},${b},0.42)`);
+          grad.addColorStop(0.7, `rgba(${r},${g},${b},0.1)`);
+          grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+          cc.fillStyle = grad;
+          cc.fillRect(0, 0, size, size);
+        }
+        return c;
+      });
+    };
+
+    // Stamps one depth slice of the dust field. Called twice per frame so the
+    // far motes sit behind the stars and the near ones drift in front.
+    const drawDust = (t: number, near: boolean, light: boolean) => {
+      if (!moteSprites.length) return;
+      const wrapW = width + 200;
+      const wrapH = height + 200;
+      const fade = light ? 0.55 : 1; // far subtler on a pale canvas
+      for (const m of dust) {
+        if (near !== m.z >= 0.5) continue;
+        const x = m.x - t * (3 + m.z * 16) + Math.sin(m.phase + t * m.speed) * m.sway;
+        const y =
+          m.y +
+          scrollY * (0.05 + m.z * 0.75) +
+          Math.cos(m.phase * 1.3 + t * m.speed * 0.8) * m.sway * 0.5;
+        const px = (((x % wrapW) + wrapW) % wrapW) - 100;
+        const py = (((y % wrapH) + wrapH) % wrapH) - 100;
+        ctx.globalAlpha = m.a * fade;
+        ctx.drawImage(moteSprites[m.tint], px - m.r, py - m.r, m.r * 2, m.r * 2);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    // Depth haze: a soft band of galactic light plus corner falloff. Two
+    // gradient fills, which is what gives the emptiness somewhere to recede to.
+    const drawHaze = (light: boolean) => {
+      const bandY = height * 0.52;
+      const bandH = height * 0.42;
+      const band = ctx.createLinearGradient(0, bandY - bandH, 0, bandY + bandH);
+      const hz = light ? "120,140,190" : "150,170,220";
+      const hzA = light ? 0.05 : 0.055;
+      band.addColorStop(0, `rgba(${hz},0)`);
+      band.addColorStop(0.5, `rgba(${hz},${hzA})`);
+      band.addColorStop(1, `rgba(${hz},0)`);
+      ctx.fillStyle = band;
+      ctx.fillRect(0, bandY - bandH, width, bandH * 2);
+
+      const maxD = Math.hypot(width / 2, height / 2);
+      const vig = ctx.createRadialGradient(
+        width / 2, height / 2, maxD * 0.55,
+        width / 2, height / 2, maxD
+      );
+      const vc = light ? "120,130,160" : "3,5,12";
+      const va = light ? 0.16 : 0.42;
+      vig.addColorStop(0, `rgba(${vc},0)`);
+      vig.addColorStop(1, `rgba(${vc},${va})`);
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, width, height);
     };
 
     const drawNebulae = (t: number, light: boolean) => {
@@ -620,7 +749,10 @@ export default function Galaxy() {
         if (warp < 0.05) warp = 0;
       }
 
+      buildMotes(light);
       drawNebulae(t, light);
+      drawHaze(light);
+      drawDust(t, false, light); // far motes sit behind everything
       if (light) drawSun(t);
       else drawBlackHole(t);
 
@@ -633,6 +765,14 @@ export default function Galaxy() {
       const bhX = width * BH.fx;
       const bhY = height * BH.fy;
       const bhR = Math.min(width, height) * BH.fr;
+      // Parallax: a star's drawn y is offset by the scroll position scaled by
+      // its depth, so near stars sweep past while the far field barely moves.
+      // Everything that positions a star must go through this, or the
+      // constellation lines detach from their endpoints.
+      const starY = (st: Star) => {
+        const y = st.y + scrollY * (0.08 + st.z * 0.55);
+        return ((y % height) + height) % height;
+      };
       // the light theme's occluder
       const sunX = width * SUN_FX;
       const sunY = height * SUN_FY;
@@ -647,8 +787,10 @@ export default function Galaxy() {
         const sun = sunCenter();
         const sunR = sun.r * SUN_DISC;
         for (const [i, j] of pairs) {
-          const a = stars[i];
-          const b = stars[j];
+          const a = { x: stars[i].x, y: starY(stars[i]) };
+          const b = { x: stars[j].x, y: starY(stars[j]) };
+          // a wrapped pair would draw a line straight across the viewport
+          if (Math.abs(a.y - b.y) > height * 0.5) continue;
           // skip any segment whose closest approach falls inside the disc
           const vx = b.x - a.x;
           const vy = b.y - a.y;
@@ -669,29 +811,34 @@ export default function Galaxy() {
           s.x -= s.drift;
           if (s.x < -2) s.x = width + 2;
         }
-        if (!light && Math.hypot(s.x - bhX, s.y - bhY) < bhR) continue;
-        if (light && Math.hypot(s.x - sunX, s.y - sunY) < sunR) continue;
-        const alpha = maxAlpha * (0.35 + 0.65 * Math.abs(Math.sin(s.twinkle)));
+        const sy = starY(s);
+        if (!light && Math.hypot(s.x - bhX, sy - bhY) < bhR) continue;
+        if (light && Math.hypot(s.x - sunX, sy - sunY) < sunR) continue;
+        // depth also dims: the far field is fainter as well as smaller
+        const depthA = 0.34 + s.z * 0.66;
+        const alpha = maxAlpha * depthA * (0.35 + 0.65 * Math.abs(Math.sin(s.twinkle)));
 
         if (warp > 0.5) {
           // stretch into a streak radiating from the warp center
           const dx = s.x - warpCx;
-          const dy = s.y - warpCy;
+          const dy = sy - warpCy;
           const d = Math.max(Math.hypot(dx, dy), 1);
           const len = warp * (0.3 + d / maxDist) * (s.r * 2.2);
           ctx.strokeStyle = `rgba(${rgb},${alpha})`;
           ctx.lineWidth = s.r;
           ctx.beginPath();
-          ctx.moveTo(s.x, s.y);
-          ctx.lineTo(s.x + (dx / d) * len, s.y + (dy / d) * len);
+          ctx.moveTo(s.x, sy);
+          ctx.lineTo(s.x + (dx / d) * len, sy + (dy / d) * len);
           ctx.stroke();
         } else {
           ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.arc(s.x, sy, s.r, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(${rgb},${alpha})`;
           ctx.fill();
         }
       }
+
+      drawDust(t, true, light); // near motes drift in front of the star field
 
       // shooting stars only against a dark sky
       if (animate && !light) {
