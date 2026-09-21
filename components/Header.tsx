@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useContent } from "@/components/providers/ContentProvider";
 import { useEditor } from "@/components/providers/EditorProvider";
 import { useTheme } from "@/lib/theme";
+import WeatherChip from "@/components/ui/WeatherChip";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 const NAV = [
@@ -162,9 +163,12 @@ export default function Header() {
       className="fixed inset-x-0 top-0 z-40 border-b border-line/60 bg-canvas/70 backdrop-blur-lg"
     >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#top" className="font-display text-lg font-bold">
-          Amr
-        </a>
+        <div className="flex items-center gap-3">
+          <a href="#top" className="font-display text-lg font-bold">
+            Amr
+          </a>
+          <WeatherChip />
+        </div>
 
         <nav className="hidden items-center gap-6 md:flex">
           {NAV.map((item) => (

@@ -13,6 +13,8 @@ const cache = new Map<string, { at: number; data: Weather }>();
 
 export interface Weather {
   ok: boolean;
+  temp: number | null; // degrees C
+  place: string; // where the reading is for
   rain: number; // 0..1 precipitation intensity
   snow: boolean;
   cloud: number; // 0..1 sky cover
@@ -23,6 +25,8 @@ export interface Weather {
 
 const FALLBACK: Weather = {
   ok: false,
+  temp: null,
+  place: "",
   rain: 0.35,
   snow: false,
   cloud: 0.7,
@@ -51,8 +55,37 @@ function intensity(mm: number): number {
   return Math.min(1, Math.pow(mm / 6, 0.55));
 }
 
-export async function GET() {
+// An IANA timezone carries a city - "America/Toronto" - which Open-Meteo's
+// free geocoder turns into coordinates. That gives a browser-derived location
+// with no permission prompt, which is what "general location" should cost.
+const geoCache = new Map<string, { lat: number; lon: number; name: string } | null>();
+
+async function fromTimezone(tz: string) {
+  if (geoCache.has(tz)) return geoCache.get(tz)!;
+  const city = tz.split("/").pop()?.replace(/_/g, " ");
+  if (!city) {
+    geoCache.set(tz, null);
+    return null;
+  }
+  try {
+    const r = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`,
+      { signal: AbortSignal.timeout(4000) }
+    );
+    const j = await r.json();
+    const hit = j?.results?.[0];
+    const out = hit ? { lat: hit.latitude, lon: hit.longitude, name: hit.name as string } : null;
+    geoCache.set(tz, out);
+    return out;
+  } catch {
+    geoCache.set(tz, null);
+    return null;
+  }
+}
+
+export async function GET(request: Request) {
   const h = await headers();
+  const tz = new URL(request.url).searchParams.get("tz") ?? "";
   // Vercel attaches these to every function request on all plans. Rounded to
   // one decimal (~11km) before it leaves us: plenty for weather, and it means
   // no precise visitor location is handed to a third party.
@@ -67,11 +100,15 @@ export async function GET() {
     Number.isFinite(rawLat) &&
     Number.isFinite(rawLon) &&
     !(rawLat === 0 && rawLon === 0);
-  // local development has no geo headers; Sarnia stands in
-  const lat = (hasGeo ? rawLat : 42.97).toFixed(1);
-  const lon = (hasGeo ? rawLon : -82.4).toFixed(1);
 
-  const key = `${lat},${lon}`;
+  // The browser's own timezone wins, then the edge's view of the IP, then
+  // Sarnia so local development has something to draw.
+  const viaTz = tz ? await fromTimezone(tz) : null;
+  const place = viaTz?.name ?? "";
+  const lat = (viaTz ? viaTz.lat : hasGeo ? rawLat : 42.97).toFixed(1);
+  const lon = (viaTz ? viaTz.lon : hasGeo ? rawLon : -82.4).toFixed(1);
+
+  const key = `${lat},${lon},${place}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) {
     return Response.json(hit.data, {
@@ -82,7 +119,7 @@ export async function GET() {
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=precipitation,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,weather_code`;
+      `&current=temperature_2m,precipitation,snowfall,cloud_cover,wind_speed_10m,wind_direction_10m,weather_code`;
     const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) throw new Error(`open-meteo ${res.status}`);
     const j = await res.json();
@@ -108,6 +145,8 @@ export async function GET() {
       wind,
       code,
       label: describe(code),
+      temp: Number.isFinite(Number(cur.temperature_2m)) ? Math.round(Number(cur.temperature_2m)) : null,
+      place,
     };
     cache.set(key, { at: Date.now(), data });
     return Response.json(data, {
