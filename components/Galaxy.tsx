@@ -27,11 +27,40 @@ interface Dust {
   tint: number; // index into the mote sprites
 }
 
-interface ShootingStar {
+// A comet is a nucleus, a coma around it, and a tail streaming behind. Two
+// flavours cross the dark sky: blazing ones in gold and icy ones in pale
+// cyan. The shooting star this replaces was a single gradient line.
+interface Comet {
   x: number;
   y: number;
+  vx: number;
+  vy: number;
+  age: number;
+  life: number;
   len: number;
-  angle: number;
+  size: number;
+  icy: boolean;
+  wobble: number;
+}
+
+// Light theme is a different sky entirely: overcast cloud with rain falling
+// through it, instead of stars.
+interface Cloud {
+  x: number;
+  y: number;
+  z: number; // depth: near clouds are larger, faster and more opaque
+  w: number;
+  h: number;
+  puffs: Array<{ dx: number; dy: number; r: number; a: number }>;
+  speed: number;
+}
+
+interface Drop {
+  x: number;
+  y: number;
+  z: number;
+  len: number;
+  speed: number;
 }
 
 interface Nebula {
@@ -55,9 +84,9 @@ const NEBULAE: Nebula[] = [
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 
 // Full-viewport animated space scene behind the site.
-// Dark theme: twinkling stars, nebulas, shooting stars, and a Gargantua-style
-// black hole. Light theme: an indigo constellation sketch with pastel nebulas
-// and a soft sun. Scrolling sends the stars to warp in both themes.
+// Dark theme: twinkling stars, nebulas, comets, and a Gargantua-style
+// black hole. Light theme: an overcast sky with rain falling through drifting
+// cloud. Scrolling sends the stars to warp, and the rain to streak.
 export default function Galaxy() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -74,9 +103,11 @@ export default function Galaxy() {
     let stars: Star[] = [];
     let dust: Dust[] = [];
     let moteSprites: HTMLCanvasElement[] = [];
-    let pairs: Array<[number, number]> = [];
     let scrollY = window.scrollY; // absolute offset, for parallax
-    let shooting: ShootingStar | null = null;
+    const comets: Comet[] = [];
+    let clouds: Cloud[] = [];
+    let rain: Drop[] = [];
+    let prevT = -1; // for a real delta time, so motion is frame-rate independent
     let raf = 0;
     let warp = 0;
     let scrollAccum = 0;
@@ -130,16 +161,43 @@ export default function Galaxy() {
           tint: Math.floor(Math.random() * 3),
         };
       });
+      // Light theme population: a few layered cloud masses and a rain field.
+      const cloudCount = Math.max(7, Math.min(12, Math.round(width / 170)));
+      clouds = Array.from({ length: cloudCount }, () => {
+        const z = Math.random();
+        const w = (0.22 + z * 0.3) * width;
+        const h = w * (0.3 + Math.random() * 0.2);
+        // each cloud is a cluster of soft puffs, so the silhouette is lumpy
+        const n = 5 + Math.floor(Math.random() * 4);
+        return {
+          x: Math.random() * (width + w) - w / 2,
+          y: Math.random() * height * 0.62 - h * 0.2,
+          z,
+          w,
+          h,
+          speed: 4 + z * 16,
+          puffs: Array.from({ length: n }, (_, i) => ({
+            dx: (i / (n - 1) - 0.5) * w * 0.8 + (Math.random() - 0.5) * w * 0.12,
+            dy: (Math.random() - 0.5) * h * 0.5,
+            r: h * (0.5 + Math.random() * 0.55),
+            a: 0.2 + Math.random() * 0.22,
+          })),
+        };
+      });
+
+      const dropCount = Math.min(420, Math.floor((width * height) / 3400));
+      rain = Array.from({ length: dropCount }, () => {
+        const z = Math.random();
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          z,
+          len: 7 + z * 20,
+          speed: 420 + z * 900,
+        };
+      });
+
       buildMotes();
-      // constellation pairs for the light theme - nearby stars, capped for perf
-      pairs = [];
-      for (let i = 0; i < stars.length && pairs.length < 140; i++) {
-        for (let j = i + 1; j < stars.length && pairs.length < 140; j++) {
-          const dx = stars[i].x - stars[j].x;
-          const dy = stars[i].y - stars[j].y;
-          if (dx * dx + dy * dy < 110 * 110) pairs.push([i, j]);
-        }
-      }
     };
 
     // One soft mote per tint, rendered once and stamped with drawImage. Doing
@@ -182,11 +240,10 @@ export default function Galaxy() {
 
     // Stamps one depth slice of the dust field. Called twice per frame so the
     // far motes sit behind the stars and the near ones drift in front.
-    const drawDust = (t: number, near: boolean, light: boolean) => {
+    const drawDust = (t: number, near: boolean) => {
       if (!moteSprites.length) return;
       const wrapW = width + 200;
       const wrapH = height + 200;
-      const fade = light ? 0.95 : 1; // motes read as pollen in the sunlight
       for (const m of dust) {
         if (near !== m.z >= 0.5) continue;
         const x = m.x - t * (3 + m.z * 16) + Math.sin(m.phase + t * m.speed) * m.sway;
@@ -196,7 +253,7 @@ export default function Galaxy() {
           Math.cos(m.phase * 1.3 + t * m.speed * 0.8) * m.sway * 0.5;
         const px = (((x % wrapW) + wrapW) % wrapW) - 100;
         const py = (((y % wrapH) + wrapH) % wrapH) - 100;
-        ctx.globalAlpha = m.a * fade;
+        ctx.globalAlpha = m.a;
         ctx.drawImage(moteSprites[m.tint], px - m.r, py - m.r, m.r * 2, m.r * 2);
       }
       ctx.globalAlpha = 1;
@@ -229,83 +286,158 @@ export default function Galaxy() {
       ctx.fillRect(0, 0, width, height);
     };
 
-    // --- light theme atmosphere ------------------------------------------
-    // The pale scene had a sun, a constellation sketch and little else. These
-    // two layers give it something to watch: shafts of light that sweep out of
-    // the sun, and slow aurora ribbons across the lower half. Both are drawn
-    // with a handful of gradient fills, so they cost almost nothing.
-
-    // Shafts thrown from the sun. They reach most of the way across the
-    // canvas, which is what separates a god ray from the short corona
-    // streamers already around the disc.
-    const drawGodRays = (t: number) => {
-      const { cx, cy, r } = sunCenter();
-      const reach = Math.hypot(width, height) * 0.92;
-      ctx.save();
-      ctx.translate(cx, cy);
-      for (let i = 0; i < 9; i++) {
-        // each shaft drifts at its own rate, so they never march in step
-        const ang =
-          (i / 9) * Math.PI * 2 + t * (0.012 + (i % 3) * 0.005) + Math.sin(i * 2.1) * 0.5;
-        const half = 0.022 + 0.032 * (0.5 + 0.5 * Math.sin(i * 1.7 + t * 0.07));
-        const len = reach * (0.45 + 0.55 * (0.5 + 0.5 * Math.sin(i * 0.9 + t * 0.05)));
-        const grad = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, len);
-        const a = 0.15 + 0.06 * Math.sin(i * 3.1 + t * 0.11);
-        grad.addColorStop(0, `rgba(252,186,84,${a.toFixed(4)})`);
-        grad.addColorStop(0.3, `rgba(250,168,96,${(a * 0.55).toFixed(4)})`);
-        grad.addColorStop(0.7, `rgba(244,150,120,${(a * 0.22).toFixed(4)})`);
-        grad.addColorStop(1, "rgba(240,140,140,0)");
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, len, ang - half, ang + half);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
+    // --- overcast sky, clouds and rain (light theme) ----------------------
+    // An overcast wash: cooler and heavier at the top, opening up toward the
+    // horizon, which is what stops a grey sky reading as flat grey.
+    const drawOvercast = () => {
+      const g = ctx.createLinearGradient(0, 0, 0, height);
+      g.addColorStop(0, "rgba(150,168,196,0.42)");
+      g.addColorStop(0.45, "rgba(176,190,214,0.26)");
+      g.addColorStop(0.78, "rgba(214,220,232,0.12)");
+      g.addColorStop(1, "rgba(236,238,244,0.02)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, width, height);
     };
 
-    // Aurora: broad translucent ribbons in the site's teal and violet, each a
-    // travelling sine so the whole band undulates.
-    const AURORA = [
-      { rgb: "13,148,136", fy: 0.50, amp: 0.06, thick: 0.075, speed: 0.08, k: 1.3, phase: 0, a: 0.20 },
-      { rgb: "124,58,237", fy: 0.66, amp: 0.08, thick: 0.095, speed: 0.06, k: 0.9, phase: 2.2, a: 0.17 },
-      { rgb: "236,72,153", fy: 0.82, amp: 0.05, thick: 0.065, speed: 0.10, k: 1.7, phase: 4.1, a: 0.15 },
-    ];
+    // Clouds are clusters of soft puffs stamped from the mote sprite, so they
+    // cost the same as the dust field. Depth drives size, speed and weight.
+    const drawClouds = (t: number, near: boolean) => {
+      if (!moteSprites.length) return;
+      const sprite = moteSprites[0];
+      for (const c of clouds) {
+        if (near !== c.z >= 0.5) continue;
+        const span = width + c.w * 2;
+        const x = (((c.x - t * c.speed) % span) + span) % span - c.w;
+        const y = c.y + scrollY * (0.04 + c.z * 0.4);
+        for (const p of c.puffs) {
+          // a touch of vertical breathing keeps the mass from looking rigid
+          const bob = Math.sin(t * 0.12 + p.dx * 0.01) * c.h * 0.06;
+          ctx.globalAlpha = p.a * (0.6 + c.z * 0.4);
+          ctx.drawImage(
+            sprite,
+            x + p.dx - p.r,
+            y + p.dy + bob - p.r,
+            p.r * 2,
+            p.r * 2
+          );
+        }
+      }
+      ctx.globalAlpha = 1;
+    };
 
-    const drawAurora = (t: number) => {
-      const steps = 36;
-      for (const a of AURORA) {
-        const midY = height * a.fy;
-        const amp = height * a.amp;
-        const thick = height * a.thick;
-        const grad = ctx.createLinearGradient(0, midY - thick, 0, midY + thick);
-        grad.addColorStop(0, `rgba(${a.rgb},0)`);
-        grad.addColorStop(0.35, `rgba(${a.rgb},${(a.a * 0.55).toFixed(3)})`);
-        grad.addColorStop(0.5, `rgba(${a.rgb},${a.a})`);
-        grad.addColorStop(0.65, `rgba(${a.rgb},${(a.a * 0.55).toFixed(3)})`);
-        grad.addColorStop(1, `rgba(${a.rgb},0)`);
+    // Rain. Every drop is a short line; they are all stroked in one path per
+    // depth band, so the whole field is a handful of draw calls rather than
+    // several hundred. Scrolling lengthens the streaks, reusing the warp idea.
+    const drawRain = (dt: number, animate: boolean, gust: number) => {
+      const tilt = 0.18 + gust * 0.05; // leaning, and more so in a gust
+      for (const band of [0, 1, 2]) {
+        const lo = band / 3;
+        const hi = (band + 1) / 3;
+        ctx.beginPath();
+        let any = false;
+        for (const d of rain) {
+          if (d.z < lo || d.z >= hi) continue;
+          if (animate) {
+            d.y += d.speed * dt;
+            d.x += d.speed * dt * tilt;
+            if (d.y > height + 20) {
+              d.y = -20 - Math.random() * height * 0.2;
+              d.x = Math.random() * (width + 200) - 100;
+            }
+            if (d.x > width + 100) d.x -= width + 200;
+          }
+          const L = d.len * (1 + gust * 0.9);
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x - L * tilt, d.y - L);
+          any = true;
+        }
+        if (!any) continue;
+        const z = (lo + hi) / 2;
+        ctx.strokeStyle = `rgba(120,140,175,${(0.14 + z * 0.3).toFixed(3)})`;
+        ctx.lineWidth = 0.6 + z * 1.0;
+        ctx.stroke();
+      }
+    };
+
+    // --- comets -----------------------------------------------------------
+    const spawnComet = () => {
+      const fromLeft = Math.random() < 0.5;
+      const speed = 190 + Math.random() * 230;
+      const ang = 0.18 + Math.random() * 0.45;
+      comets.push({
+        x: fromLeft ? -80 : width + 80,
+        y: Math.random() * height * 0.55,
+        vx: (fromLeft ? 1 : -1) * speed * Math.cos(ang),
+        vy: speed * Math.sin(ang),
+        age: 0,
+        life: 2.6 + Math.random() * 2.2,
+        len: 90 + Math.random() * 190,
+        size: 1.1 + Math.random() * 1.9,
+        icy: Math.random() < 0.5,
+        wobble: Math.random() * Math.PI * 2,
+      });
+    };
+
+    const drawComets = (dt: number, animate: boolean) => {
+      if (animate && comets.length < 3 && Math.random() < 0.006) spawnComet();
+
+      for (let i = comets.length - 1; i >= 0; i--) {
+        const c = comets[i];
+        if (animate) {
+          c.age += dt;
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+        }
+        if (c.age > c.life || c.x < -260 || c.x > width + 260 || c.y > height + 260) {
+          comets.splice(i, 1);
+          continue;
+        }
+        // ease in and out at the ends so nothing pops into existence
+        const u = c.age / c.life;
+        const fade = Math.min(1, u / 0.18) * Math.min(1, (1 - u) / 0.25);
+        if (fade <= 0.01) continue;
+
+        const sp = Math.hypot(c.vx, c.vy) || 1;
+        const ux = -c.vx / sp; // unit vector pointing back along the trail
+        const uy = -c.vy / sp;
+        const tailLen = c.len * (0.75 + 0.25 * Math.sin(c.wobble + c.age * 2));
+        const tx = c.x + ux * tailLen;
+        const ty = c.y + uy * tailLen;
+
+        const core = c.icy ? "214,244,255" : "255,236,190";
+        const mid = c.icy ? "120,210,255" : "255,168,74";
+        const edge = c.icy ? "70,140,230" : "236,96,52";
+
+        // tail: a tapered wedge, brightest where it leaves the nucleus
+        const grad = ctx.createLinearGradient(c.x, c.y, tx, ty);
+        grad.addColorStop(0, `rgba(${core},${(0.85 * fade).toFixed(3)})`);
+        grad.addColorStop(0.18, `rgba(${mid},${(0.5 * fade).toFixed(3)})`);
+        grad.addColorStop(0.55, `rgba(${edge},${(0.16 * fade).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(${edge},0)`);
+        const px = -uy;
+        const py = ux;
+        const hw = c.size * 1.7;
         ctx.fillStyle = grad;
         ctx.beginPath();
-        // top edge left to right, bottom edge back - one closed ribbon
-        for (let i = 0; i <= steps; i++) {
-          const x = (i / steps) * width;
-          const y =
-            midY +
-            Math.sin((x / width) * Math.PI * 2 * a.k + a.phase + t * a.speed) * amp +
-            Math.sin((x / width) * Math.PI * 5.3 + a.phase * 1.7 - t * a.speed * 0.6) * amp * 0.35;
-          if (i === 0) ctx.moveTo(x, y - thick);
-          else ctx.lineTo(x, y - thick);
-        }
-        for (let i = steps; i >= 0; i--) {
-          const x = (i / steps) * width;
-          const y =
-            midY +
-            Math.sin((x / width) * Math.PI * 2 * a.k + a.phase + t * a.speed) * amp +
-            Math.sin((x / width) * Math.PI * 5.3 + a.phase * 1.7 - t * a.speed * 0.6) * amp * 0.35;
-          ctx.lineTo(x, y + thick);
-        }
+        ctx.moveTo(c.x + px * hw, c.y + py * hw);
+        ctx.lineTo(tx + px * hw * 0.25, ty + py * hw * 0.25);
+        ctx.lineTo(tx - px * hw * 0.25, ty - py * hw * 0.25);
+        ctx.lineTo(c.x - px * hw, c.y - py * hw);
         ctx.closePath();
+        ctx.fill();
+
+        // coma: the glow packed around the nucleus
+        const comaR = c.size * 7;
+        const coma = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, comaR);
+        coma.addColorStop(0, `rgba(${core},${(0.8 * fade).toFixed(3)})`);
+        coma.addColorStop(0.4, `rgba(${mid},${(0.3 * fade).toFixed(3)})`);
+        coma.addColorStop(1, `rgba(${mid},0)`);
+        ctx.fillStyle = coma;
+        ctx.fillRect(c.x - comaR, c.y - comaR, comaR * 2, comaR * 2);
+
+        ctx.fillStyle = `rgba(255,255,255,${(0.95 * fade).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
         ctx.fill();
       }
     };
@@ -835,6 +967,9 @@ export default function Galaxy() {
     const drawFrame = (animate: boolean, t: number) => {
       ctx.clearRect(0, 0, width, height);
       const light = isLight();
+      // clamped so a backgrounded tab returning does not teleport anything
+      const dt = prevT < 0 ? 0.016 : Math.min(0.05, Math.max(0, t - prevT));
+      prevT = t;
 
       // warp factor follows scroll velocity, easing back to rest
       if (animate) {
@@ -845,14 +980,21 @@ export default function Galaxy() {
       }
 
       buildMotes(light);
-      drawNebulae(t, light);
-      if (light) drawAurora(t);
-      drawHaze(light);
-      drawDust(t, false, light); // far motes sit behind everything
       if (light) {
-        drawGodRays(t); // shafts pass behind the disc, so draw them first
+        // Overcast sky: wash, then the sun diffused behind the cloud deck,
+        // then far cloud. Near cloud goes on after the rain so some of the
+        // weather falls behind it.
+        drawOvercast();
+        // dimmed hard: through cloud this should read as a bright patch of
+        // sky rather than a disc with a limb
+        ctx.globalAlpha = 0.42;
         drawSun(t);
+        ctx.globalAlpha = 1;
+        drawClouds(t, false);
       } else {
+        drawNebulae(t, light);
+        drawHaze(light);
+        drawDust(t, false); // far motes sit behind everything
         drawBlackHole(t);
       }
 
@@ -878,34 +1020,8 @@ export default function Galaxy() {
       const sunY = height * SUN_FY;
       const sunR = Math.min(width, height) * SUN_FR * SUN_DISC;
 
-      // constellation lines - light theme, only when cruising (not warping)
-      if (light && warp < 2) {
-        const lineAlpha = 0.13 * (1 - warp / 2);
-        ctx.lineWidth = 0.7;
-        // The star is an opaque body: sketch lines must not run across its
-        // face, or it stops reading as something in front of the sky.
-        const sun = sunCenter();
-        const sunR = sun.r * SUN_DISC;
-        for (const [i, j] of pairs) {
-          const a = { x: stars[i].x, y: starY(stars[i]) };
-          const b = { x: stars[j].x, y: starY(stars[j]) };
-          // a wrapped pair would draw a line straight across the viewport
-          if (Math.abs(a.y - b.y) > height * 0.5) continue;
-          // skip any segment whose closest approach falls inside the disc
-          const vx = b.x - a.x;
-          const vy = b.y - a.y;
-          const len2 = vx * vx + vy * vy;
-          const u = len2 ? Math.max(0, Math.min(1, ((sun.cx - a.x) * vx + (sun.cy - a.y) * vy) / len2)) : 0;
-          if (Math.hypot(a.x + vx * u - sun.cx, a.y + vy * u - sun.cy) < sunR) continue;
-          ctx.strokeStyle = `rgba(${rgb},${lineAlpha})`;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
-      }
-
-      for (const s of stars) {
+      // The light theme has no stars any more - it is weather, not space.
+      for (const s of light ? [] : stars) {
         if (animate) {
           s.twinkle += s.twinkleSpeed;
           s.x -= s.drift;
@@ -938,40 +1054,15 @@ export default function Galaxy() {
         }
       }
 
-      drawDust(t, true, light); // near motes drift in front of the star field
+      if (!light) drawDust(t, true); // near motes drift in front of the stars
 
-      // shooting stars only against a dark sky
-      if (animate && !light) {
-        if (!shooting && Math.random() < 0.0035) {
-          shooting = {
-            x: Math.random() * width * 0.7 + width * 0.15,
-            y: Math.random() * height * 0.35,
-            len: 0,
-            angle: Math.PI / 4 + (Math.random() - 0.5) * 0.4,
-          };
-        }
-        if (shooting) {
-          shooting.len += 13;
-          const { x, y, len, angle } = shooting;
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-          const tail = Math.max(len - 90, 0);
-          const grad = ctx.createLinearGradient(
-            x + dx * tail,
-            y + dy * tail,
-            x + dx * len,
-            y + dy * len
-          );
-          grad.addColorStop(0, "rgba(45,212,191,0)");
-          grad.addColorStop(1, "rgba(230,240,255,0.9)");
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.6;
-          ctx.beginPath();
-          ctx.moveTo(x + dx * tail, y + dy * tail);
-          ctx.lineTo(x + dx * len, y + dy * len);
-          ctx.stroke();
-          if (len > 420) shooting = null;
-        }
+      if (light) {
+        const gust = Math.min(1, warp / 14); // scrolling stretches the streaks
+        drawRain(dt, animate, gust);
+        drawClouds(t, true);
+        drawHaze(light);
+      } else {
+        drawComets(dt, animate);
       }
     };
 
