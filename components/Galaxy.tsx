@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { loadWeather, subscribeWeather } from "@/lib/weather";
 
 interface Star {
   x: number;
@@ -118,6 +119,7 @@ export default function Galaxy() {
     // lookup lands, and what stays if it never does.
     let weather = { rain: 0, snow: false, cloud: 0.7, wind: 0.2, label: "" };
     let weatherAsked = false;
+    let unsubWeather: (() => void) | null = null;
     let rainSeeds: Float32Array | null = null;
     let raf = 0;
     let warp = 0;
@@ -131,16 +133,11 @@ export default function Galaxy() {
     const ensureWeather = () => {
       if (weatherAsked || !FEATURES.liveWeather) return;
       weatherAsked = true;
-      fetch("/api/weather")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((w) => {
-          if (w && typeof w.rain === "number") {
-            weather = { rain: w.rain, snow: !!w.snow, cloud: w.cloud, wind: w.wind, label: w.label };
-          }
-        })
-        .catch(() => {
-          // keep the defaults; the backdrop must never depend on this
-        });
+      // shared with the header chip, so the page makes one lookup, not two
+      unsubWeather = subscribeWeather((w) => {
+        weather = { rain: w.rain, snow: !!w.snow, cloud: w.cloud, wind: w.wind, label: w.label };
+      });
+      loadWeather();
     };
 
     const onScroll = () => {
@@ -544,7 +541,6 @@ export default function Galaxy() {
     const RING_W = 0.055; // photon-ring thickness in impact parameter
     const RING_GAIN = 1.7;
     const RING_ASYM = 0.45; // Doppler lopsidedness of the ring
-    const MINR_NEARSIDE = 3.5; // closest approach separating near side from grazers
     const BASE_CLAMP = 5.0; // outlier ceiling for grazing rays at the rim
     const TURB_NORM = 0.3876; // mean of the three wave envelopes, so depth != dimming
     const RING_OMEGA = 2.4 / Math.pow(3.0, 1.5); // inner-edge orbital rate, drives ring shimmer
@@ -625,56 +621,87 @@ export default function Galaxy() {
 
           if (h2 > 88) continue; // too far out for any light path
 
-          let x = sx, y = sy, z = 10;
-          let vx = 0, vy = 0, vz = -1;
-          let side = y * cosT + z * sinT;
-          let r2 = h2 + 100;
-          let minR = 1e9;
+          // The near-side band crossing the hole's face is only a couple of
+          // texels thick, so one ray per pixel aliases its edge into a
+          // scatter of bright specks across the black disc. Supersample where
+          // the geometry is that thin. Rays aimed inside the shadow terminate
+          // almost immediately at the horizon, so this costs far less than the
+          // sample count suggests.
+          const sub = b < B_SHADOW + 0.12 ? 3 : 1;
+          let acc = 0;
+          let bestBase = -1;
+          let bestRR = 0;
+          let bestPhi = 0;
 
-          for (let s = 0; s < 520; s++) {
-            r2 = x * x + y * y + z * z;
-            const r1 = Math.sqrt(r2);
-            if (r1 < minR) minR = r1;
-            if (r2 < 1) break; // fell through the horizon
-            const f = (-1.5 * h2) / (r2 * r2 * r1);
-            const dt = Math.min(0.2, Math.max(0.02, 0.045 * r1));
-            vx += f * x * dt; vy += f * y * dt; vz += f * z * dt;
-            const px0 = x, py0 = y, pz0 = z;
-            x += vx * dt; y += vy * dt; z += vz * dt;
+          for (let sj = 0; sj < sub; sj++) {
+            for (let si = 0; si < sub; si++) {
+              const ox = sub === 1 ? 0 : ((si + 0.5) / sub - 0.5) * px;
+              const oy = sub === 1 ? 0 : ((sj + 0.5) / sub - 0.5) * px;
+              const rx = sx + ox;
+              const ry = sy - oy;
+              const rh2 = rx * rx + ry * ry;
 
-            const sideN = y * cosT + z * sinT;
-            if (side * sideN < 0) {
-              // crossed the disk plane - interpolate the hit point
-              const k = side / (side - sideN);
-              const hx = px0 + (x - px0) * k;
-              const hy = py0 + (y - py0) * k;
-              const hz = pz0 + (z - pz0) * k;
-              const rr = Math.sqrt(hx * hx + hy * hy + hz * hz);
-              if (rr >= R_IN && rr <= R_OUT) {
-                // Two ray families overlap near the shadow. The near-side disk
-                // passing in front of the hole never comes close (minR ~ 5-8)
-                // and must be kept - it is the band across the black face.
-                // Rays grazing the photon sphere (minR ~ 1-2.6) clip the disk's
-                // inner edge on their way in, and their Doppler-cubed radiance
-                // swings wildly pixel to pixel: that is the dashed rim. Beyond
-                // b0 + 0.5 the wrapped arch is smooth again, so the cut is local.
-                if (!(b < B_SHADOW + 0.5 && minR < MINR_NEARSIDE)) {
-                  let base = Math.pow(R_IN / rr, 2.2) * 1.7;
-                  base *= Math.min(1, (R_OUT - rr) / 1.4); // outer fade
-                  base *= Math.min(1, (rr - R_IN) / 0.25 + 0.15); // inner edge
-                  // Doppler beaming: the orbit tangent's line-of-sight part
-                  const dz = (-cosT * hx) / rr;
-                  const beta = 0.5 * Math.sqrt(R_IN / rr);
-                  const dopp = 1 / (1 - beta * dz);
-                  diskBase[p] = base * dopp * dopp * dopp;
-                  hitR[p] = rr;
-                  hitPhi[p] = Math.atan2(hz, hx);
+              let x = rx, y = ry, z = 10;
+              let vx = 0, vy = 0, vz = -1;
+              let side = y * cosT + z * sinT;
+              let r2 = rh2 + 100;
+              // Whether the ray has rounded its closest approach. The crossing
+              // that passes in FRONT of the hole happens while the ray is
+              // still falling inward; anything crossing after periapsis has
+              // wrapped around the back.
+              let receding = false;
+              let prevR = Infinity;
+
+              for (let st = 0; st < 520; st++) {
+                r2 = x * x + y * y + z * z;
+                const r1 = Math.sqrt(r2);
+                if (r1 > prevR) receding = true;
+                prevR = r1;
+                if (r2 < 1) break; // fell through the horizon
+                const f = (-1.5 * rh2) / (r2 * r2 * r1);
+                const dt = Math.min(0.2, Math.max(0.02, 0.045 * r1));
+                vx += f * x * dt; vy += f * y * dt; vz += f * z * dt;
+                const px0 = x, py0 = y, pz0 = z;
+                x += vx * dt; y += vy * dt; z += vz * dt;
+
+                const sideN = y * cosT + z * sinT;
+                if (side * sideN < 0) {
+                  // crossed the disk plane - interpolate the hit point
+                  const k = side / (side - sideN);
+                  const hx = px0 + (x - px0) * k;
+                  const hy = py0 + (y - py0) * k;
+                  const hz = pz0 + (z - pz0) * k;
+                  const rr = Math.sqrt(hx * hx + hy * hy + hz * hz);
+                  if (rr >= R_IN && rr <= R_OUT) {
+                    // near the shadow keep only the inbound crossing; the
+                    // wrapped arch further out is well behaved and is kept
+                    if (!(b < B_SHADOW + 0.5 && receding)) {
+                      let base = Math.pow(R_IN / rr, 2.2) * 1.7;
+                      base *= Math.min(1, (R_OUT - rr) / 1.4); // outer fade
+                      base *= Math.min(1, (rr - R_IN) / 0.25 + 0.15); // inner edge
+                      // Doppler beaming: the orbit tangent's line-of-sight part
+                      const dz = (-cosT * hx) / rr;
+                      const beta = 0.5 * Math.sqrt(R_IN / rr);
+                      const dopp = 1 / (1 - beta * dz);
+                      const val = base * dopp * dopp * dopp;
+                      acc += val;
+                      if (val > bestBase) { bestBase = val; bestRR = rr; bestPhi = Math.atan2(hz, hx); }
+                    }
+                    break;
+                  }
                 }
-                break;
+                side = sideN;
+                if (r2 > 180 || (z < -11 && vz < 0)) break; // escaped
               }
             }
-            side = sideN;
-            if (r2 > 180 || (z < -11 && vz < 0)) break; // escaped
+          }
+
+          if (bestBase > 0) {
+            // divide by the full sample count, not the hit count: a partly
+            // covered texel is genuinely dimmer, which is the anti-aliasing
+            diskBase[p] = acc / (sub * sub);
+            hitR[p] = bestRR;
+            hitPhi[p] = bestPhi;
           }
         }
       }
@@ -1157,6 +1184,7 @@ export default function Galaxy() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", onScroll);
       observer.disconnect();
+      unsubWeather?.();
     };
   }, []);
 
