@@ -23,7 +23,7 @@ export default function Hero() {
           them; mask-repeat has to be off or the gradient tiles. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [mask-repeat:no-repeat] [mask-size:100%_100%] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500 [.light_&]:opacity-25 [mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [mask-repeat:no-repeat] [mask-size:100%_100%] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]"
       >
         <div className="absolute -top-40 -left-40 h-[32rem] w-[32rem] rounded-full bg-teal-500/15 blur-3xl animate-blob" />
         <div className="absolute top-1/4 -right-32 h-[28rem] w-[28rem] rounded-full bg-violet-500/15 blur-3xl animate-blob-slow" />
