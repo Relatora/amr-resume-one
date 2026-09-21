@@ -3,6 +3,7 @@ export interface Personal {
   title: string;
   email: string;
   resume: string;
+  github: string;
   location: string;
   summary: string;
 }

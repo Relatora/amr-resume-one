@@ -120,6 +120,7 @@ function PersonalForm({ onClose }: { onClose: () => void }) {
       <Field label="Title" value={draft.title} onChange={set("title")} />
       <Field label="Email" value={draft.email} onChange={set("email")} />
       <Field label="Resume PDF (file in /docs)" value={draft.resume} onChange={set("resume")} />
+      <Field label="GitHub URL" value={draft.github} onChange={set("github")} />
       <Field label="Location" value={draft.location} onChange={set("location")} />
       <TextArea label="Summary" value={draft.summary} onChange={set("summary")} rows={7} />
       <SaveCancelRow
