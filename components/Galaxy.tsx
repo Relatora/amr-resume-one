@@ -186,7 +186,7 @@ export default function Galaxy() {
       if (!moteSprites.length) return;
       const wrapW = width + 200;
       const wrapH = height + 200;
-      const fade = light ? 0.55 : 1; // far subtler on a pale canvas
+      const fade = light ? 0.95 : 1; // motes read as pollen in the sunlight
       for (const m of dust) {
         if (near !== m.z >= 0.5) continue;
         const x = m.x - t * (3 + m.z * 16) + Math.sin(m.phase + t * m.speed) * m.sway;
@@ -227,6 +227,87 @@ export default function Galaxy() {
       vig.addColorStop(1, `rgba(${vc},${va})`);
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, width, height);
+    };
+
+    // --- light theme atmosphere ------------------------------------------
+    // The pale scene had a sun, a constellation sketch and little else. These
+    // two layers give it something to watch: shafts of light that sweep out of
+    // the sun, and slow aurora ribbons across the lower half. Both are drawn
+    // with a handful of gradient fills, so they cost almost nothing.
+
+    // Shafts thrown from the sun. They reach most of the way across the
+    // canvas, which is what separates a god ray from the short corona
+    // streamers already around the disc.
+    const drawGodRays = (t: number) => {
+      const { cx, cy, r } = sunCenter();
+      const reach = Math.hypot(width, height) * 0.92;
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let i = 0; i < 9; i++) {
+        // each shaft drifts at its own rate, so they never march in step
+        const ang =
+          (i / 9) * Math.PI * 2 + t * (0.012 + (i % 3) * 0.005) + Math.sin(i * 2.1) * 0.5;
+        const half = 0.022 + 0.032 * (0.5 + 0.5 * Math.sin(i * 1.7 + t * 0.07));
+        const len = reach * (0.45 + 0.55 * (0.5 + 0.5 * Math.sin(i * 0.9 + t * 0.05)));
+        const grad = ctx.createRadialGradient(0, 0, r * 0.8, 0, 0, len);
+        const a = 0.15 + 0.06 * Math.sin(i * 3.1 + t * 0.11);
+        grad.addColorStop(0, `rgba(252,186,84,${a.toFixed(4)})`);
+        grad.addColorStop(0.3, `rgba(250,168,96,${(a * 0.55).toFixed(4)})`);
+        grad.addColorStop(0.7, `rgba(244,150,120,${(a * 0.22).toFixed(4)})`);
+        grad.addColorStop(1, "rgba(240,140,140,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, len, ang - half, ang + half);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+
+    // Aurora: broad translucent ribbons in the site's teal and violet, each a
+    // travelling sine so the whole band undulates.
+    const AURORA = [
+      { rgb: "13,148,136", fy: 0.50, amp: 0.06, thick: 0.075, speed: 0.08, k: 1.3, phase: 0, a: 0.20 },
+      { rgb: "124,58,237", fy: 0.66, amp: 0.08, thick: 0.095, speed: 0.06, k: 0.9, phase: 2.2, a: 0.17 },
+      { rgb: "236,72,153", fy: 0.82, amp: 0.05, thick: 0.065, speed: 0.10, k: 1.7, phase: 4.1, a: 0.15 },
+    ];
+
+    const drawAurora = (t: number) => {
+      const steps = 36;
+      for (const a of AURORA) {
+        const midY = height * a.fy;
+        const amp = height * a.amp;
+        const thick = height * a.thick;
+        const grad = ctx.createLinearGradient(0, midY - thick, 0, midY + thick);
+        grad.addColorStop(0, `rgba(${a.rgb},0)`);
+        grad.addColorStop(0.35, `rgba(${a.rgb},${(a.a * 0.55).toFixed(3)})`);
+        grad.addColorStop(0.5, `rgba(${a.rgb},${a.a})`);
+        grad.addColorStop(0.65, `rgba(${a.rgb},${(a.a * 0.55).toFixed(3)})`);
+        grad.addColorStop(1, `rgba(${a.rgb},0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        // top edge left to right, bottom edge back - one closed ribbon
+        for (let i = 0; i <= steps; i++) {
+          const x = (i / steps) * width;
+          const y =
+            midY +
+            Math.sin((x / width) * Math.PI * 2 * a.k + a.phase + t * a.speed) * amp +
+            Math.sin((x / width) * Math.PI * 5.3 + a.phase * 1.7 - t * a.speed * 0.6) * amp * 0.35;
+          if (i === 0) ctx.moveTo(x, y - thick);
+          else ctx.lineTo(x, y - thick);
+        }
+        for (let i = steps; i >= 0; i--) {
+          const x = (i / steps) * width;
+          const y =
+            midY +
+            Math.sin((x / width) * Math.PI * 2 * a.k + a.phase + t * a.speed) * amp +
+            Math.sin((x / width) * Math.PI * 5.3 + a.phase * 1.7 - t * a.speed * 0.6) * amp * 0.35;
+          ctx.lineTo(x, y + thick);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
     };
 
     const drawNebulae = (t: number, light: boolean) => {
@@ -548,12 +629,26 @@ export default function Galaxy() {
       const shimmer = 0.85 + 0.15 * Math.sin(t * 0.8);
       const unit = r / B_CRIT;
 
-      // ambient warmth thrown onto the surrounding space
-      const glow = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 3.2);
-      glow.addColorStop(0, `rgba(255,170,90,${0.16 * shimmer})`);
-      glow.addColorStop(1, "rgba(255,140,80,0)");
+      // Ambient warmth thrown onto the surrounding space. A two-stop gradient
+      // ramps at a constant rate right up to its boundary, so on a dark canvas
+      // the tail ends on a visible edge. These stops follow exp(-3u^2) instead:
+      // the slope flattens toward zero, and the glow dissolves into the
+      // background rather than stopping at a line. The radius is longer for
+      // the same reason - a slow tail is what makes it disappear.
+      const gr = r * 4.2;
+      const glow = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, gr);
+      const peak = 0.185 * shimmer;
+      for (const [u, f] of [
+        [0, 1], [0.12, 0.958], [0.25, 0.829], [0.38, 0.648],
+        [0.5, 0.472], [0.65, 0.281], [0.8, 0.147], [0.9, 0.06], [1, 0],
+      ]) {
+        // cool the hue slightly as it fades, so the tail meets the violet sky
+        const g2 = Math.round(170 - 24 * u);
+        const b2 = Math.round(90 + 26 * u);
+        glow.addColorStop(u, `rgba(255,${g2},${b2},${(peak * f).toFixed(4)})`);
+      }
       ctx.fillStyle = glow;
-      ctx.fillRect(cx - r * 3.2, cy - r * 3.2, r * 6.4, r * 6.4);
+      ctx.fillRect(cx - gr, cy - gr, gr * 2, gr * 2);
 
       ctx.save();
       ctx.translate(cx, cy);
@@ -751,10 +846,15 @@ export default function Galaxy() {
 
       buildMotes(light);
       drawNebulae(t, light);
+      if (light) drawAurora(t);
       drawHaze(light);
       drawDust(t, false, light); // far motes sit behind everything
-      if (light) drawSun(t);
-      else drawBlackHole(t);
+      if (light) {
+        drawGodRays(t); // shafts pass behind the disc, so draw them first
+        drawSun(t);
+      } else {
+        drawBlackHole(t);
+      }
 
       const rgb = light ? "55,48,163" : "226,238,255";
       const maxAlpha = light ? 0.55 : 0.85;
