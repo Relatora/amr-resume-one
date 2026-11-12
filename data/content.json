@@ -1,306 +1,278 @@
 {
   "personal": {
     "name": "Amr Abdallah",
-    "title": "Software & Database Engineer · Team Lead",
+    "title": "Solutions Architect | Applied AI Engineer | Senior Full-Stack Engineer",
     "email": "relatora@gmail.com",
-    "resume": "Amr Abdallah Resume.pdf",
-    "location": "Ontario, Canada",
-    "summary": "Dedicated and efficient full-stack developer and software team lead. I merge a passion for usability and user experience with deep technical knowledge to engineer great digital experiences on both the front end and back end. My recent work spans Azure cloud architecture - MQTT brokers, web services, app services, and Kusto DB - AI-assisted development workflows, and integrating AI platforms into engineering operations. I'm a self-motivated problem solver who thrives on the latest technologies. ",
-    "github": "https://github.com/Relatora"
+    "resumes": [
+      {
+        "id": "solutions-architect",
+        "label": "Solutions Architect",
+        "file": "Amr_Abdallah_Resume_Solutions_Architect.pdf"
+      },
+      {
+        "id": "full-stack",
+        "label": "Senior Full-Stack Engineer",
+        "file": "Amr_Abdallah_Resume_Senior_Full-Stack_Engineer.pdf"
+      },
+      {
+        "id": "applied-ai",
+        "label": "Applied AI Engineer",
+        "file": "Amr_Abdallah_Resume_Applied_AI_Engineer.pdf"
+      }
+    ],
+    "github": "https://github.com/Relatora",
+    "location": "Canada",
+    "summary": "Senior Software Engineering Lead with 10+ years of hands-on engineering. I design and build systems that connect hardware, data, and people: real-time IoT telemetry on Azure, company-wide web applications behind a single authentication gateway, and a Copilot Studio agent that answers thousands of questions a month over enterprise quality and supply-chain data. I lead a team of engineers, own delivery from requirements and architecture through automated deployment, and still write production code every week."
   },
   "experience": [
     {
       "id": "alumapower",
-      "title": "Senior Software Engineer and Project Manager",
+      "title": "Senior Software Engineering Lead",
       "org": "AlumaPower",
-      "start": "Apr 2021",
+      "start": "2022",
       "end": "Present",
       "type": "Full Time",
-      "summary": "Leading software engineering for internal operations: cloud architecture on Azure, databases, web/desktop/mobile apps, and AI-integrated workflows.",
+      "summary": "Leading software engineering for a venture-backed clean-energy company: cloud architecture on Azure, company-wide web applications, real-time IoT, and AI agents.",
       "bullets": [
-        "Design, architect and implement databases for various internal desktop apps, mobile apps and web apps required for internal operations.",
-        "Design and develop predictive AI models to analyze experimental and operational data, identify patterns, and support data-driven predictions and decision-making.",
-        "Designed and implemented an AI agent using Microsoft Copilot Studio and Azure to secure and control access to an Azure API, creating an intelligent layer over the API pipeline for controlled and secure interaction with backend services.",
-        "Implement among a team web apps and desktop apps for various internal operations that saves the team thousands of hours spent doing analysis manually as well as many internal tools and software that tie pipelines together.",
-        "Coordinate teams to accomplish projects of varying size and complexity.",
-        "Design and implement unit tests, regression tests and end to end tests to Alumapower's solutions.",
-        "Assemble requirements from users, record them, and create logical and physical specifications.",
-        "Analyze the performance and dependability of designs and to optimize architecture, develop data, process, and network models.",
-        "Develop, install, integrate, and run computer-based systems, including mobile applications, according to a plan and schedule.",
-        "Operating systems, communications environments, and application software maintenance methods are evaluated, tested, troubleshot, documented, upgraded, and developed.",
-        "The development of software and integrated information systems, process control software, and other embedded software control systems may be led and coordinated by teams of information systems professionals.",
-        "Technical writing and documentation of software."
+        "Engineered a real-time IoT data pipeline: hardware boards publish MQTT messages to Azure Web Apps that decode and normalize multi-sensor readings onto shared timestamps, feeding Kusto (Grafana dashboards), MongoDB, and a live client that charts telemetry and starts/stops fans and motors.",
+        "Built the company's analytics platform, turning operational logs and test-technician experiment data into the KPIs behind company decisions and reports, with Docker-hosted Redis caching large queries.",
+        "Architected a company-wide MERN suite behind one authentication gateway, spanning QMS, SCM, HR, assets, quality data, fabrication, and ticketing, saving thousands of hours.",
+        "Delivered a Microsoft Copilot Studio agent running on Claude, used company-wide in Teams (thousands of questions a month), that answers QMS, NCR, ECR, purchasing, and KPI questions in seconds and flags recurring issues, bottlenecks, and failing equipment.",
+        "Implemented the secured, read-only Azure API behind the agent (Entra ID OAuth), exposing curated MongoDB aggregation views as LLM tools, so the model never writes raw database queries.",
+        "Developed a C# WinForms data logger and controller that charts live voltage, current, temperature, and flow and actuates hardware; now migrating it to React and .NET Core.",
+        "Set up CI/CD with Jenkins and GitHub webhooks for all web apps, Terraform provisioning, and a self-hosted Gitea server on the internal network; own unit, regression, and end-to-end testing.",
+        "Lead the engineering team, owning hiring, performance reviews, and delivery, and coordinate with leadership and the testing, fabrication, hardware, firmware, HR, and finance teams.",
+        "Created the data-cleaning pipeline feeding Monolith AI's platform, whose predictive models for experiments and chemical reactions replaced many physical tests and cut costs by 32%."
       ]
     },
     {
       "id": "industrial-web-apps",
       "title": "IT Project Manager",
       "org": "Industrial Web Apps",
-      "start": "Apr 2021",
-      "end": "Jul 2022",
+      "start": "2021",
+      "end": "2022",
       "type": "Full Time",
-      "summary": "Directed project teams through the full development lifecycle, keeping simultaneous software projects on time and on spec.",
+      "summary": "Delivery lead on SHORE, the company's end-to-end project management platform.",
       "bullets": [
-        "Organized teams, time, and resources so projects met stated requirements and were completed on time.",
-        "Provided direction to project teams for all phases of the development lifecycle.",
-        "Supervised timely completion of software projects, contributing technical expertise and leadership to resolve issues.",
-        "Proactively identified obstacles within project teams and proposed creative solutions.",
-        "Lent experience and guidance to project conception and feasibility analyses.",
-        "Maintained the development backlog and prioritized existing and incoming tasks.",
-        "Worked closely with development and deployment teams to deliver simultaneous projects.",
-        "Developed and peer-reviewed multiple projects."
+        "Contributed to SHORE, built with React, Node.js, and PostgreSQL on AWS (API Gateway, EC2, Elastic Beanstalk, S3, IAM, CloudTrail).",
+        "Directed cross-functional teams across the full project lifecycle, maintained the backlog, and prioritized work across simultaneous development and deployment projects.",
+        "Set up Docker-based development environments and web deployments."
       ]
     },
     {
       "id": "lambton-professor",
-      "title": "Professor",
+      "title": "Professor (Part-Time)",
       "org": "Lambton College",
-      "start": "Sep 2021",
+      "start": "2021",
       "end": "Present",
       "type": "Part Time",
-      "summary": "Teaching Front-End Web Development I (HTML5, CSS3) and II (JavaScript, jQuery, intro to Vue and React).",
+      "summary": "Teaching front-end web development.",
       "bullets": [
-        "Teach Front-End Web Development I covering HTML5 and CSS3.",
-        "Teach Front-End Web Development II covering JavaScript and jQuery with an introduction to Vue and React."
+        "Teach Front-End Web Development I (HTML5, CSS3) and II (JavaScript, jQuery, Vue, React).",
+        "Supervise co-op students."
       ]
     },
     {
-      "id": "eyelook",
-      "title": "Full-stack Developer",
+      "id": "eye-look-media",
+      "title": "Full-Stack Developer",
       "org": "Eye-Look Media",
-      "start": "Nov 2020",
-      "end": "May 2021",
+      "start": "2020",
+      "end": "2021",
       "type": "Full Time",
-      "summary": "Digital signage platform managing client media across kiosk networks (Laravel, Vue, MySQL, NodeJS microservices).",
+      "summary": "Digital signage platform used by clients such as Canadian Tire.",
       "bullets": [
-        "Developed a digital signage portal that lets clients like Canadian Tire intelligently distribute and control media across screens in all their branches, using a Laravel, Vue, and MySQL stack.",
-        "Built a client-access progressive web app (PWA) communicating over WebSocket.",
-        "Created NodeJS microservices for recursive file parsing, socket bridging, and automation."
+        "Authored most of the Laravel backend of the digital signage management portal (Laravel, Vue, MySQL), which manages content across clients down to individual screens.",
+        "Built the Electron content editor that composes what each screen shows (images, videos, widgets) from the Laravel server's payload.",
+        "Developed a client-facing progressive web app over WebSocket, plus Node.js microservices for file parsing, socket bridging, and automation."
       ]
     },
     {
       "id": "avaros",
-      "title": "Software Developer",
+      "title": "Software Developer (Co-op)",
       "org": "Avaros EMR",
-      "start": "May 2020",
-      "end": "Aug 2020",
+      "start": "2020",
+      "end": "2020",
       "type": "Co-op",
-      "summary": "Patient online-booking frontend and scheduler backend for an electronic medical records platform.",
+      "summary": "Patient booking and scheduling for an electronic medical records product.",
       "bullets": [
-        "Built the patient online-booking frontend with ReactJS, React Hooks, RxJS, and TypeScript - endpoints and numerous components.",
-        "Integrated Twilio SMS webhooks into the scheduler backend using Go, with corresponding PostgreSQL migrations.",
-        "Delivered bug fixes and functionality additions to Oscar EMR using Java, JSP, CSS, MariaDB, and JavaScript.",
-        "Configured a complex Linux development environment; authored a highly interactive 138-page document detailing WebSocket server logic flow."
+        "Created a patient online-booking frontend (React, React Hooks, RxJS, TypeScript).",
+        "Integrated Twilio SMS webhooks into a Go backend with PostgreSQL migrations."
       ]
     },
     {
       "id": "lambton-research",
-      "title": "Researcher",
+      "title": "Researcher (Contracts)",
       "org": "Lambton College Applied Research",
       "start": "2019",
-      "end": "Present",
-      "type": "Contracts",
-      "summary": "Applied research and solution engineering for industry clients - IoT, microservices, mobile, and full-stack builds.",
+      "end": "2023",
+      "type": "Contract",
+      "summary": "Applied research projects for industry partners.",
       "bullets": [
-        "Researched OrderEase (an Amazon-like business): authored an investor-facing document and an analysis of their software architecture's strengths and weaknesses.",
-        "Implemented a microservices-based digital signage solution for EyeLook Media running on Raspberry Pi 4, dynamically generating HTML/JS/CSS from server payloads with date/time display rules.",
-        "Implemented an internal MERN-stack system for Procor to handle day-to-day railcar operations.",
-        "Developed key components for a hockey team's React Native mobile app.",
-        "Created a full-stack rental-timeline project (NodeJS, ExpressJS, ReactJS, MySQL) displaying product rentals on daily, weekly, and monthly views.",
-        "Engineered a solution for Just Vertical (vertical hydroponics): a Flutter app communicating via WebSocket with an AWS Lambda microservice bridging to a Quasar/Electron (VueJS) app on an embedded Raspberry Pi - scheduling irrigation and lighting while dashboarding humidity and temperature.",
-        "For Tertec: built interactive drag-and-drop IoT components using Vue JS, D3 JS, and Rete JS.",
-        "Tutored students in Python, database development, Java SE/EE, C#, JavaScript, program logic and design, and NodeJS."
+        "Engineered an IoT solution for Just Vertical: a Flutter app over WebSocket to an AWS Lambda microservice, bridging to a Quasar/Electron (Vue.js) app on Raspberry Pi units for irrigation and lighting automation.",
+        "Delivered a MERN-stack operations system for Procor (railcar operations).",
+        "Built a Raspberry Pi 4 digital signage player for Eye-Look Media, which led to their hiring me."
       ]
     },
     {
-      "id": "modern-education",
-      "title": "IGCSE ICT Teacher",
-      "org": "Modern Education Schools",
-      "start": "2016",
-      "end": "2018",
+      "id": "earlier",
+      "title": "Software Developer and Team Lead, then ICT Teacher",
+      "org": "Earlier Professional Experience",
+      "start": "",
+      "end": "",
       "type": "Full Time",
-      "summary": "Created the ICT syllabus and built internal school solutions including a grading system.",
+      "summary": "",
       "bullets": [
-        "Gathered resources and created a syllabus covering Microsoft Office, Scratch programming, flow charts, and HTML/CSS web development.",
-        "Built numerous internal solutions for the school, including a grading system."
-      ]
-    },
-    {
-      "id": "modern-schools-egypt",
-      "title": "American System ICT Teacher",
-      "org": "Modern Schools of Egypt",
-      "start": "2006",
-      "end": "2016",
-      "type": "Full Time",
-      "summary": "A decade of ICT teaching plus internal software solutions for the school.",
-      "bullets": [
-        "Created and delivered an ICT syllabus based on Microsoft Office, Scratch programming, flow charts, and HTML/CSS.",
-        "Built numerous internal software solutions for the school."
-      ]
-    },
-    {
-      "id": "gulf-network",
-      "title": "Software Developer",
-      "org": "Gulf Network Solutions",
-      "start": "2003",
-      "end": "2006",
-      "type": "Full Time",
-      "summary": "Sales-force automation, promotional card-slip logic for McDonald's Egypt, and internal tooling.",
-      "bullets": [
-        "Developed a Sales Force Automation solution using Pocket PC terminals with MS SQL replication.",
-        "Implemented the randomization and categorization logic for McDonald's Egypt e-learning promotional card-slip batches.",
-        "Built utilities, services, and tools for internal use."
-      ]
-    },
-    {
-      "id": "middle-east-network",
-      "title": "Software Developer",
-      "org": "Middle East Network Solutions",
-      "start": "2000",
-      "end": "2003",
-      "type": "Full Time",
-      "summary": "Banking and call-center solutions, including team leadership on dynamic call-center delivery.",
-      "bullets": [
-        "Developed, as part of a team, an SMS-based banking solution for the National Bank of Egypt.",
-        "Team leader for a dynamic automated call-center solution at Misr for Custody and Stock Depository; instructed a team to fully adapt the solution to their system.",
-        "Developed Goldi's dynamic call-center solution."
+        "Delivered an SMS-based banking solution for a national bank and a Pocket PC sales-force automation system with MS SQL replication (C#, .NET Framework).",
+        "Later designed ICT curricula and school software, including a grading system."
       ]
     }
   ],
   "skills": [
     {
-      "id": "cloud",
-      "category": "Cloud & Architecture",
+      "id": "fullstack",
+      "category": "Full-Stack Engineering",
       "items": [
-        "Azure (App Services, Web Services)",
-        "MQTT Brokers",
-        "Kusto DB (Azure Data Explorer)",
-        "AWS",
-        "AWS Lambda",
-        "Microservices",
+        "MERN (MongoDB, Express, React, Node.js)",
+        "Go",
+        "Python (FastAPI, Flask)",
+        "Java (Spring)",
+        ".NET Core / C#",
+        "PHP (Laravel)",
+        "Vue.js",
+        "TypeScript",
         "REST APIs",
-        "WebSockets",
-        "Three-tier Architecture",
-        "Nginx / Apache / IIS",
-        "Redis"
+        "GraphQL"
+      ]
+    },
+    {
+      "id": "architecture",
+      "category": "Solutions Architecture",
+      "items": [
+        "Microservices",
+        "Distributed and event-driven systems",
+        "Real-time IoT (MQTT, Modbus, WebSocket)",
+        "Secured API design",
+        "Cloud infrastructure design"
       ]
     },
     {
       "id": "ai",
-      "category": "AI & Modern Workflow",
+      "category": "AI & Agentic Systems",
       "items": [
-        "Monolith AI Integration",
-        "AI-assisted Development (Vibe Coding)",
-        "Claude Code",
-        "Prompt-driven Prototyping"
+        "AI agents",
+        "LLM integration",
+        "Tool / function calling",
+        "Microsoft Copilot Studio",
+        "Model Context Protocol (MCP)",
+        "Retrieval-augmented generation (RAG)",
+        "Prompt engineering",
+        "Multi-agent coding with Claude Code",
+        "Local LLMs",
+        "Predictive modeling"
       ]
     },
     {
-      "id": "frontend",
-      "category": "Front End",
+      "id": "azure",
+      "category": "Azure",
       "items": [
-        "JavaScript / TypeScript",
-        "React",
-        "Vue.js",
-        "Svelte",
-        "SolidJS",
-        "Next.js",
-        "Gatsby",
-        "RxJS",
-        "GSAP",
-        "jQuery",
-        "HTML5",
-        "CSS3 / Tailwind"
+        "Functions",
+        "App Service",
+        "Container Apps",
+        "Virtual Machines",
+        "Cosmos DB",
+        "Blob Storage",
+        "SignalR",
+        "API Management",
+        "Entra ID",
+        "Azure Data Explorer",
+        "Power BI"
       ]
     },
     {
-      "id": "backend",
-      "category": "Back End & Languages",
+      "id": "aws",
+      "category": "AWS",
       "items": [
-        "Node.js / Express",
-        "C# / ASP.NET",
-        "Java SE/EE / Spring Boot",
-        "Go",
-        "Python",
-        "PHP / Laravel",
-        "Bun",
-        "Meteor"
+        "Lambda",
+        "API Gateway",
+        "EC2",
+        "Elastic Beanstalk",
+        "Container services",
+        "Amplify",
+        "DynamoDB",
+        "MemoryDB",
+        "S3",
+        "EFS",
+        "IAM",
+        "CloudWatch",
+        "CloudTrail",
+        "Network Firewall",
+        "AWS Backup"
       ]
     },
     {
-      "id": "mobile",
-      "category": "Mobile & Embedded",
+      "id": "devops",
+      "category": "DevOps & Testing",
       "items": [
-        "Flutter / Dart",
-        "React Native",
-        "Android",
-        "iOS",
-        "Raspberry Pi",
-        "Electron / Quasar",
-        "IoT"
+        "Docker",
+        "Terraform",
+        "Jenkins + GitHub webhooks CI/CD",
+        "Gitea (self-hosted)",
+        "Jest",
+        "Cypress",
+        "Playwright"
       ]
     },
     {
-      "id": "databases",
-      "category": "Databases",
+      "id": "data",
+      "category": "Data Systems",
       "items": [
-        "MSSQL",
         "PostgreSQL",
-        "MySQL / MariaDB",
-        "MongoDB",
-        "Oracle DB",
+        "MySQL",
+        "Oracle",
         "DB2",
+        "MS SQL",
+        "MongoDB",
         "Kusto",
-        "Database Design & Modeling"
+        "Grafana",
+        "Redis",
+        "Supabase",
+        "Vector databases"
       ]
     },
     {
-      "id": "practices",
-      "category": "Leadership & Practices",
+      "id": "leadership",
+      "category": "Technical Leadership & Delivery",
       "items": [
-        "Team Leadership",
-        "Project Management",
-        "Agile / Scrum",
-        "Unit / Regression / E2E Testing",
-        "Code Review",
-        "Technical Writing",
-        "Git",
-        "Requirements Engineering"
+        "Hiring and performance management",
+        "Full-lifecycle delivery",
+        "Requirements and specifications",
+        "Backlog prioritization",
+        "Agile / Scrum (Jira, Azure DevOps)",
+        "Visio architecture diagrams"
       ]
     }
   ],
   "education": [
     {
       "id": "lambton",
-      "credential": "Computer Software & Database Development",
-      "institution": "Lambton College, Sarnia, ON",
-      "start": "Jan 2019",
-      "end": "Aug 2020",
+      "credential": "Diploma, Computer Software & Database Development",
+      "institution": "Lambton College",
+      "start": "2019",
+      "end": "2021",
       "details": [
-        "Cumulative GPA 3.89/4.0 (terms: 3.73, 4.0, 4.0)",
+        "Cumulative GPA 3.89/4.0",
         "Three-tier MVC web applications in Java and C#; MERN, AWS, and Flutter apps.",
-        "Database design and maintenance across Oracle, MySQL, MariaDB, PostgreSQL, MongoDB, and DB2.",
-        "Agile and Waterfall project management; Android and iOS mobile development."
-      ]
-    },
-    {
-      "id": "microsoft-academy",
-      "credential": "Microsoft Partner Academy Courses",
-      "institution": "Microsoft",
-      "start": "2002",
-      "end": "2003",
-      "details": [
-        "Systems Architecture and Networking, Project Management, Microsoft Solutions Framework, Security, Technical Writing, and Vision 2 Results soft-skills training."
+        "Database design across Oracle, MySQL, MariaDB, PostgreSQL, MongoDB, and DB2."
       ]
     },
     {
       "id": "october-university",
-      "credential": "Bachelor of Business Administration",
-      "institution": "6th of October University, Egypt",
-      "start": "1996",
-      "end": "1999",
+      "credential": "Bachelor of Business Administration, Finance (minor: Economics)",
+      "institution": "6th of October University",
+      "start": "",
+      "end": "",
       "details": [
-        "Specialization: Finance · Minor: Economics · Degree: Very Good · Graduation Project: Distinct"
+        "Degree: Very Good · Graduation Project: Distinct"
       ]
     }
   ]

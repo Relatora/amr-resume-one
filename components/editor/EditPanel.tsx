@@ -111,18 +111,30 @@ function SaveCancelRow({
 function PersonalForm({ onClose }: { onClose: () => void }) {
   const { content, update } = useContent();
   const [draft, setDraft] = useState<Personal>(content.personal);
-  const set = (k: keyof Personal) => (v: string) =>
+  const set = (k: Exclude<keyof Personal, "resumes">) => (v: string) =>
     setDraft((d) => ({ ...d, [k]: v }));
+  // Resume options keep their ids (they are the /resume/<id> URLs); only the
+  // menu label and the PDF file name are editable here.
+  const setResume = (i: number, k: "label" | "file") => (v: string) =>
+    setDraft((d) => ({
+      ...d,
+      resumes: d.resumes.map((r, j) => (j === i ? { ...r, [k]: v } : r)),
+    }));
 
   return (
     <PanelShell title="Edit intro" onClose={onClose}>
       <Field label="Name" value={draft.name} onChange={set("name")} />
       <Field label="Title" value={draft.title} onChange={set("title")} />
       <Field label="Email" value={draft.email} onChange={set("email")} />
-      <Field label="Resume PDF (file in /docs)" value={draft.resume} onChange={set("resume")} />
       <Field label="GitHub URL" value={draft.github} onChange={set("github")} />
       <Field label="Location" value={draft.location} onChange={set("location")} />
       <TextArea label="Summary" value={draft.summary} onChange={set("summary")} rows={7} />
+      {draft.resumes.map((r, i) => (
+        <div key={r.id} className="grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-2">
+          <Field label={`Resume ${i + 1}: menu label`} value={r.label} onChange={setResume(i, "label")} />
+          <Field label="PDF file (in /docs/resumes)" value={r.file} onChange={setResume(i, "file")} />
+        </div>
+      ))}
       <SaveCancelRow
         onSave={() => {
           update((c) => ({ ...c, personal: draft }));

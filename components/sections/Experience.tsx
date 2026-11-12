@@ -8,6 +8,7 @@ import { useEditor } from "@/components/providers/EditorProvider";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { AddButton, EditButton, MoveButtons } from "@/components/ui/EditControls";
 import { ACCENTS, fadeUp } from "@/lib/motion";
+import { formatRange } from "@/lib/format";
 
 const PREVIEW_BULLETS = 3;
 
@@ -66,7 +67,7 @@ function ExperienceCard({
           </div>
           <div className="flex items-center gap-2">
             <p className="font-mono text-xs text-ink-dim">
-              {entry.start} - {entry.end}
+              {formatRange(entry.start, entry.end)}
               <span className="ml-2 rounded-full border border-line px-2 py-0.5">
                 {entry.type}
               </span>

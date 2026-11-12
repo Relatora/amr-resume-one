@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useContent } from "@/components/providers/ContentProvider";
 import { useEditor } from "@/components/providers/EditorProvider";
 import { EditButton } from "@/components/ui/EditControls";
+import ResumeMenu from "@/components/ui/ResumeMenu";
 import { fadeUp, stagger } from "@/lib/motion";
 
 export default function Hero() {
@@ -72,13 +73,7 @@ export default function Hero() {
           >
             Get in touch
           </a>
-          <a
-            href="/resume"
-            download
-            className="press rounded-lg border border-line px-5 py-3 text-sm font-semibold text-ink transition hover:border-teal-400/50 hover-veil"
-          >
-            Download resume (PDF)
-          </a>
+          <ResumeMenu className="px-5 py-3" />
           {personal.github && (
             <a
               href={personal.github}

@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     body &&
     typeof body === "object" &&
     body.personal &&
+    Array.isArray(body.personal.resumes) &&
     Array.isArray(body.experience) &&
     Array.isArray(body.skills) &&
     Array.isArray(body.education);

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useContent } from "@/components/providers/ContentProvider";
 import { fadeUp } from "@/lib/motion";
+import ResumeMenu from "@/components/ui/ResumeMenu";
 
 export default function Contact() {
   const { content } = useContent();
@@ -36,13 +37,7 @@ export default function Contact() {
           >
             {personal.email}
           </a>
-          <a
-            href="/resume"
-            download
-            className="press rounded-lg border border-line px-6 py-3 text-sm font-semibold transition hover:border-teal-400/50 hover-veil"
-          >
-            Download resume (PDF)
-          </a>
+          <ResumeMenu className="px-6 py-3" />
         </div>
         <p className="mt-16 text-xs text-ink-dim">
           © {new Date().getFullYear()} {personal.name} · Built with Next.js,

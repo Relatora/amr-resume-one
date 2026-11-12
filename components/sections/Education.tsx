@@ -6,6 +6,7 @@ import { useEditor } from "@/components/providers/EditorProvider";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { AddButton, EditButton, MoveButtons } from "@/components/ui/EditControls";
 import { ACCENTS, fadeUp } from "@/lib/motion";
+import { formatRange } from "@/lib/format";
 
 export default function Education() {
   const { content, update } = useContent();
@@ -39,7 +40,7 @@ export default function Education() {
             >
               <div className="flex items-start justify-between gap-2">
                 <p className="font-mono text-xs text-ink-dim">
-                  {entry.start} - {entry.end}
+                  {formatRange(entry.start, entry.end)}
                 </p>
                 {editMode && (
                   <span className="flex items-center gap-1">

@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // /docs is outside the build graph, so tell the tracer to ship the PDF
-  // that the /resume route handler reads at runtime.
+  // docs/resumes is outside the build graph: the /resume/[role] handler reads
+  // the PDFs at runtime, so tell the tracer to ship them with that route.
+  // Route keys are globs, so "/resume/**" covers the dynamic [role] segment.
   outputFileTracingIncludes: {
-    "/resume": ["./docs/*.pdf"],
+    "/resume/**": ["./docs/resumes/*.pdf"],
   },
 };
 
