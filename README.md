@@ -9,7 +9,7 @@ This site is both my resume and a small showcase of how I like to build: content
 ## Highlights
 
 - **Animated, theme-aware UI** - dark/light modes, an animated galaxy starfield, gradient typography, wavy section separators, and scroll-staggered reveals built with Framer Motion.
-- **Role-based resume downloads** - visitors pick the version that fits the role they're hiring for (Solutions Architect, Senior Full-Stack Engineer, Applied AI Engineer). Each option in `content.json` maps to a PDF in `docs/resumes/`, served by `app/resume/[role]/route.ts` through an allowlist; the old `/resume` link redirects to the default.
+- **Role-based resume downloads** - visitors pick the version that fits the role they're hiring for (Solutions Architect, Senior Full-Stack Engineer, Applied AI Engineer, Software Engineering Manager). Each option in `content.json` maps to a PDF in `docs/resumes/`, served by `app/resume/[role]/route.ts` through an allowlist; the old `/resume` link redirects to the default.
 - **Content as data** - the entire resume lives in [`data/content.json`](data/content.json). No copy is hardcoded in components.
 - **In-page editing** - an owner mode (password-gated) edits every section through inline forms: add, remove, reorder, and rewrite without touching JSON.
 - **Demo mode** - visitors can try the editor safely; nothing persists, and a Reset button restores the original at any time.
