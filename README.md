@@ -9,6 +9,7 @@ This site is both my resume and a small showcase of how I like to build: content
 ## Highlights
 
 - **Animated, theme-aware UI** - dark/light modes, an animated galaxy starfield, gradient typography, wavy section separators, and scroll-staggered reveals built with Framer Motion.
+- **Project intro spot** - on a visitor's first load each session, a 7-second ad-style cut flashes four GitHub projects (flash frames, glitch, wipe and iris cuts, slam-in type), then the cards fly into a replay button in the header. Skippable with Esc; reduced motion swaps the flashes for crossfades. Projects come from `content.json` and the in-page editor, with screenshots in `public/projects/`.
 - **Role-based resume downloads** - visitors pick the version that fits the role they're hiring for (Solutions Architect, Senior Full-Stack Engineer, Applied AI Engineer, Software Engineering Manager). Each option in `content.json` maps to a PDF in `docs/resumes/`, served by `app/resume/[role]/route.ts` through an allowlist; the old `/resume` link redirects to the default.
 - **Content as data** - the entire resume lives in [`data/content.json`](data/content.json). No copy is hardcoded in components.
 - **In-page editing** - an owner mode (password-gated) edits every section through inline forms: add, remove, reorder, and rewrite without touching JSON.
@@ -45,6 +46,7 @@ components/sections/     # Hero, Experience, Skills, Education, Contact
 components/editor/       # slide-in edit panel + form primitives
 components/providers/    # auth, content (persistence), editor state
 components/Galaxy.tsx    # animated starfield background
+components/intro/        # the project intro spot and its replay button
 ```
 
 ## Updating the resume PDFs

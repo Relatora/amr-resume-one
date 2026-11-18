@@ -6,6 +6,7 @@ import type {
   EducationEntry,
   ExperienceEntry,
   Personal,
+  ProjectEntry,
   SkillGroup,
 } from "@/lib/types";
 import { useContent } from "@/components/providers/ContentProvider";
@@ -313,6 +314,121 @@ function EducationForm({ id, onClose }: { id: string | null; onClose: () => void
   );
 }
 
+// The intro deck is edited as one list, since order matters (it is the order
+// the spot plays) and a project has no section of its own on the page to
+// hang an edit button on. Screenshots live in public/projects; a new one is
+// dropped there and its path typed in here.
+function ProjectsForm({ onClose }: { onClose: () => void }) {
+  const { content, update } = useContent();
+  const [draft, setDraft] = useState<ProjectEntry[]>(content.projects ?? []);
+
+  const setAt = (i: number, patch: Partial<ProjectEntry>) =>
+    setDraft((d) => d.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const move = (i: number, dir: -1 | 1) =>
+    setDraft((d) => {
+      const j = i + dir;
+      if (j < 0 || j >= d.length) return d;
+      const next = [...d];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  const add = () =>
+    setDraft((d) => [
+      ...d,
+      {
+        id: newId(),
+        name: "",
+        tagline: "",
+        tags: [""],
+        repo: "",
+        live: "",
+        image: "/projects/",
+        imageAlt: "",
+      },
+    ]);
+
+  const save = () => {
+    const clean = draft
+      .filter((p) => p.name.trim())
+      .map((p) => ({ ...p, tags: p.tags.filter((t) => t.trim()) }));
+    update((c) => ({ ...c, projects: clean }));
+    onClose();
+  };
+
+  const btn =
+    "cursor-pointer rounded-md border border-line px-2 py-1 text-xs text-ink-dim transition hover-veil disabled:opacity-30 disabled:cursor-default";
+
+  return (
+    <PanelShell title="Edit intro projects" onClose={onClose}>
+      <p className="text-sm text-ink-dim">
+        The intro plays these in order. Screenshots go in{" "}
+        <code className="text-ink">public/projects/</code> at 1280x800.
+      </p>
+      {draft.map((p, i) => (
+        <div key={p.id} className="space-y-3 rounded-lg border border-line p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-display text-sm font-semibold">
+              {p.name || "New project"}
+            </span>
+            <span className="flex gap-1">
+              <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" className={btn}>
+                ↑
+              </button>
+              <button
+                onClick={() => move(i, 1)}
+                disabled={i === draft.length - 1}
+                aria-label="Move down"
+                className={btn}
+              >
+                ↓
+              </button>
+              <button
+                onClick={() => setDraft((d) => d.filter((_, j) => j !== i))}
+                aria-label={`Remove ${p.name || "project"}`}
+                className={`${btn} hover:border-rose-400/50 hover:text-accent-rose`}
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <Field label="Name" value={p.name} onChange={(name) => setAt(i, { name })} />
+          <Field label="Tagline" value={p.tagline} onChange={(tagline) => setAt(i, { tagline })} />
+          <Field label="GitHub repo URL" value={p.repo} onChange={(repo) => setAt(i, { repo })} />
+          <Field
+            label="Live app URL (optional)"
+            value={p.live}
+            onChange={(live) => setAt(i, { live })}
+          />
+          <Field
+            label="Screenshot path"
+            value={p.image}
+            onChange={(image) => setAt(i, { image })}
+            placeholder="/projects/my-project.webp"
+          />
+          <Field
+            label="Screenshot description"
+            value={p.imageAlt}
+            onChange={(imageAlt) => setAt(i, { imageAlt })}
+          />
+          <StringListEditor
+            label="Tags"
+            items={p.tags}
+            onChange={(tags) => setAt(i, { tags })}
+            addLabel="Add tag"
+          />
+        </div>
+      ))}
+      <button
+        onClick={add}
+        className="cursor-pointer rounded-lg border border-dashed border-teal-400/40 px-4 py-2 text-sm text-accent-teal transition hover:bg-teal-400/10"
+      >
+        + Add project
+      </button>
+      <SaveCancelRow onSave={save} onCancel={onClose} />
+    </PanelShell>
+  );
+}
+
 function FormFor({ target, onClose }: { target: EditTarget; onClose: () => void }) {
   switch (target.kind) {
     case "personal":
@@ -323,6 +439,8 @@ function FormFor({ target, onClose }: { target: EditTarget; onClose: () => void 
       return <SkillsForm id={target.id} onClose={onClose} />;
     case "education":
       return <EducationForm id={target.id} onClose={onClose} />;
+    case "projects":
+      return <ProjectsForm onClose={onClose} />;
   }
 }
 

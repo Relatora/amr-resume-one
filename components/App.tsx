@@ -13,25 +13,30 @@ import Contact from "@/components/sections/Contact";
 import EditPanel from "@/components/editor/EditPanel";
 import Modals from "@/components/modals/Modals";
 import Galaxy from "@/components/Galaxy";
+import { IntroProvider } from "@/components/intro/IntroProvider";
 
 export default function App({ initial }: { initial: ResumeContent }) {
   return (
     <AuthProvider>
       <EditorProvider>
         <ContentProvider initial={initial}>
-          <Galaxy />
-          <div className="relative z-10">
-            <Header />
-            <main>
-              <Hero />
-              <Experience />
-              <Skills />
-              <Education />
-              <Contact />
-            </main>
-            <EditPanel />
-            <Modals />
-          </div>
+          {/* Wraps the page so the header's replay button can reach the
+              intro, which renders on top of everything else. */}
+          <IntroProvider>
+            <Galaxy />
+            <div className="relative z-10">
+              <Header />
+              <main>
+                <Hero />
+                <Experience />
+                <Skills />
+                <Education />
+                <Contact />
+              </main>
+              <EditPanel />
+              <Modals />
+            </div>
+          </IntroProvider>
         </ContentProvider>
       </EditorProvider>
     </AuthProvider>

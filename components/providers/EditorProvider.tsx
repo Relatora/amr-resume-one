@@ -6,7 +6,8 @@ export type EditTarget =
   | { kind: "personal" }
   | { kind: "experience"; id: string | null } // null = add new
   | { kind: "skills"; id: string | null }
-  | { kind: "education"; id: string | null };
+  | { kind: "education"; id: string | null }
+  | { kind: "projects" }; // the whole intro deck in one form
 
 // off = viewing · real = owner editing (persists) · demo = visitor try-out (never persists)
 export type EditMode = "off" | "real" | "demo";

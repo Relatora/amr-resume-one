@@ -44,11 +44,28 @@ export interface EducationEntry {
   details: string[];
 }
 
+// One card in the intro project spot. `image` is a path under public/
+// (public/projects/<id>.webp by convention, 1280x800). `live` is optional:
+// an empty string means the project has no hosted demo to link to.
+export interface ProjectEntry {
+  id: string;
+  name: string;
+  tagline: string;
+  tags: string[];
+  repo: string;
+  live: string;
+  image: string;
+  imageAlt: string;
+}
+
 export interface ResumeContent {
   personal: Personal;
   experience: ExperienceEntry[];
   skills: SkillGroup[];
   education: EducationEntry[];
+  // Optional so content saved in a browser before projects existed still
+  // loads; read it through `content.projects ?? []`.
+  projects?: ProjectEntry[];
 }
 
 export type SectionKey = "experience" | "skills" | "education";

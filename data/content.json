@@ -280,5 +280,67 @@
         "Degree: Very Good · Graduation Project: Distinct"
       ]
     }
+  ],
+  "projects": [
+    {
+      "id": "showroom-ai",
+      "name": "Showroom AI",
+      "tagline": "A dealership CRM whose AI assistant cites every answer.",
+      "tags": [
+        "Laravel",
+        "Vue 3",
+        "pgvector RAG",
+        "MCP server"
+      ],
+      "repo": "https://github.com/Relatora/showroom-ai",
+      "live": "",
+      "image": "/projects/showroom-ai.webp",
+      "imageAlt": "Ask Showroom answering a policy question with five cited sources"
+    },
+    {
+      "id": "painter-quote",
+      "name": "Painter Quote",
+      "tagline": "Job photos to a priced painting quote in under a minute.",
+      "tags": [
+        "Cloudflare Workers",
+        "Hono",
+        "D1",
+        "Gemini"
+      ],
+      "repo": "https://github.com/Relatora/painter-quote",
+      "live": "",
+      "image": "/projects/painter-quote.webp",
+      "imageAlt": "Four phone screens: job photos, the prep the AI found, priced work, and the customer's quote"
+    },
+    {
+      "id": "passport-cropper",
+      "name": "Passport Cropper",
+      "tagline": "Finds, straightens and crops passport photos without uploading a thing.",
+      "tags": [
+        "React",
+        "OpenCV",
+        "MediaPipe",
+        "WebAssembly"
+      ],
+      "repo": "https://github.com/Relatora/passport-cropper",
+      "live": "https://relatora.github.io/passport-cropper/",
+      "image": "/projects/passport-cropper.webp",
+      "imageAlt": "The step-by-step guide: loose scanned photos turned into cropped passport photos"
+    },
+    {
+      "id": "team-github-dashboard",
+      "name": "Team GitHub Dashboard",
+      "tagline": "Real engineering work across every repo, with the generated-file noise removed.",
+      "tags": [
+        "Next.js",
+        "PostgreSQL",
+        "GitHub API",
+        "Charts"
+      ],
+      "repo": "https://github.com/Relatora/team-github-dashboard",
+      "live": "",
+      "image": "/projects/team-github-dashboard.webp",
+      "imageAlt": "The dashboard: commit KPIs, commits over time, and breakdowns by category and author"
+    }
   ]
 }

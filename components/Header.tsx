@@ -6,6 +6,7 @@ import { useEditor } from "@/components/providers/EditorProvider";
 import { useTheme } from "@/lib/theme";
 import WeatherChip from "@/components/ui/WeatherChip";
 import { useAuth } from "@/components/providers/AuthProvider";
+import ReplayButton from "@/components/intro/ReplayButton";
 
 const NAV = [
   { href: "#experience", label: "Experience" },
@@ -183,6 +184,7 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <ReplayButton />
           <button
             onClick={toggle}
             role="switch"
