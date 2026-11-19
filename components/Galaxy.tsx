@@ -67,10 +67,11 @@ const FEATURES = {
 // renderer and the star loop (stars behind the event horizon are occluded).
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 
-// Full-viewport animated space scene behind the dark theme: twinkling stars,
+// The dark theme's fallback sky, drawn on a 2D canvas: twinkling stars,
 // nebulas, comets, and a Gargantua-style black hole. Scrolling sends the
-// stars to warp. The light theme has its own paper-craft sky (PaperSky), so
-// this canvas clears itself and idles while the page is light.
+// stars to warp. The main dark sky is the WebGL2 one in components/space;
+// this is used when WebGL2 is unavailable or fails (see DarkSky.tsx). The
+// light theme has its own paper-craft sky, so this canvas idles there.
 export default function Galaxy() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

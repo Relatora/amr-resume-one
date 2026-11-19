@@ -14,7 +14,7 @@ import Education from "@/components/sections/Education";
 import Contact from "@/components/sections/Contact";
 import EditPanel from "@/components/editor/EditPanel";
 import Modals from "@/components/modals/Modals";
-import Galaxy from "@/components/Galaxy";
+import DarkSky from "@/components/space/DarkSky";
 import { PaperDefs, PaperSky } from "@/components/paper/Paper";
 import { IntroProvider } from "@/components/intro/IntroProvider";
 
@@ -26,7 +26,7 @@ export default function App({ initial }: { initial: ResumeContent }) {
           {/* Wraps the page so the header's replay button can reach the
               intro, which renders on top of everything else. */}
           <IntroProvider>
-            {/* Dark theme: the canvas galaxy. Light theme: the paper sky. */}
+            {/* Dark theme: the GPU sky (DarkSky). Light theme: the paper sky. */}
             <PaperDefs />
             <PaperSky />
             {/* Dark theme: the focus keywords written faintly into space,
@@ -36,7 +36,7 @@ export default function App({ initial }: { initial: ResumeContent }) {
             <div aria-hidden className="pointer-events-none fixed inset-0 z-0 [.light_&]:hidden">
               <SkyWords theme="dark" />
             </div>
-            <Galaxy />
+            <DarkSky />
             <div className="relative z-10">
               <Header />
               <main>

@@ -8,7 +8,7 @@ This site is both my resume and a small showcase of how I like to build: content
 
 ## Highlights
 
-- **Two worlds, one page** - dark mode is a canvas galaxy with a ray-traced black hole; light mode is a paper-craft sky built in SVG: a cut-paper sun that sets into a layered paper ocean as you scroll, drifting three-sheet clouds, folded-paper birds, and live-weather paper rain. All scroll motion runs on sprung values over GPU layers so it glides.
+- **Two worlds, one page** - dark mode is a WebGL2 sky: a black hole whose disk is ray-traced in a Web Worker and animated in a shader, gravitationally lensing coloured stars, the Milky Way and filamented nebula gas behind it, with the occasional shooting star; light mode is a paper-craft sky built in SVG: a cut-paper sun that sets into a layered paper ocean as you scroll, drifting three-sheet clouds, folded-paper birds, and live-weather paper rain. All scroll motion runs on sprung values over GPU layers so it glides.
 - **Projects deck** - big cards that pin and stack as you scroll, tilting toward the cursor, fed from `content.json`.
 - **Interactive skills board** - every skill on one board; pick an area and its skills glide to the front in that area's colour.
 - **Sky keywords** - focus areas written faintly across the sky, behind the clouds in light mode and under the stars and black hole in dark mode, shown only from Projects to Contact.
@@ -48,7 +48,8 @@ docs/resumes/            # the published PDFs (generated, see below)
 components/sections/     # Hero, Experience, Skills, Education, Contact
 components/editor/       # slide-in edit panel + form primitives
 components/providers/    # auth, content (persistence), editor state
-components/Galaxy.tsx    # dark theme: animated starfield and black hole
+components/space/        # dark theme: the WebGL2 sky, disk ray tracer and shooting stars
+components/Galaxy.tsx    # dark theme fallback: the 2D canvas galaxy, used without WebGL2
 components/paper/        # light theme: the paper-craft sky, sea and sky keywords
 components/intro/        # the project intro spot and its replay button
 ```
