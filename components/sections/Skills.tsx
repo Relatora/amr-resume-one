@@ -1,12 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import type { SkillGroup } from "@/lib/types";
 import { useContent } from "@/components/providers/ContentProvider";
 import { useEditor } from "@/components/providers/EditorProvider";
 import SectionHeading from "@/components/ui/SectionHeading";
 import WaveDivider from "@/components/ui/WaveDivider";
 import { AddButton, EditButton, MoveButtons } from "@/components/ui/EditControls";
-import { ACCENTS, fadeUp, popIn, stagger } from "@/lib/motion";
+import SkillsBoard from "@/components/sections/skills/SkillsBoard";
+
+// The section shell: heading, wave edges, the band, and the edit controls.
+// The interactive board itself lives in skills/SkillsBoard.tsx.
 
 export default function Skills() {
   const { content, update } = useContent();
@@ -22,72 +25,32 @@ export default function Skills() {
       return { ...c, skills: list };
     });
 
+  const editControls = (group: SkillGroup, gi: number) =>
+    editMode ? (
+      <span className="flex items-center gap-1">
+        <MoveButtons
+          onUp={() => move(group.id, -1)}
+          onDown={() => move(group.id, 1)}
+          canUp={gi > 0}
+          canDown={gi < content.skills.length - 1}
+        />
+        <EditButton onClick={() => openEditor({ kind: "skills", id: group.id })} />
+      </span>
+    ) : null;
+
   return (
     <section id="skills" className="relative scroll-mt-20">
       <WaveDivider />
-      <div className="bg-canvas-soft/60 py-24">
+      <div className="bg-canvas-soft/60 py-24 [.light_&]:bg-white/70">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <SectionHeading eyebrow="Toolbox" title="Skills" />
-        <div className="grid gap-6 sm:grid-cols-2">
-          {content.skills.map((group, gi) => {
-            const accent = ACCENTS[gi % ACCENTS.length];
-            return (
-              <motion.div
-                key={group.id}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, margin: "-60px" }}
-                className={`gradient-border rounded-2xl p-5 shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 ${accent.glow}`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className={`font-display text-base font-bold ${accent.text}`}>
-                    {group.category}
-                  </h3>
-                  {editMode && (
-                    <span className="flex items-center gap-1">
-                      <MoveButtons
-                        onUp={() => move(group.id, -1)}
-                        onDown={() => move(group.id, 1)}
-                        canUp={gi > 0}
-                        canDown={gi < content.skills.length - 1}
-                      />
-                      <EditButton
-                        onClick={() => openEditor({ kind: "skills", id: group.id })}
-                      />
-                    </span>
-                  )}
-                </div>
-                <motion.div
-                  variants={stagger}
-                  initial="hidden"
-                  whileInView="show"
-                  viewport={{ once: true, margin: "-40px" }}
-                  className="mt-4 flex flex-wrap gap-2"
-                >
-                  {group.items.map((item) => (
-                    <motion.span
-                      key={item}
-                      variants={popIn}
-                      className={`rounded-full border ${accent.border} ${accent.hoverBorder} veil px-3 py-1 text-xs text-ink transition hover-veil`}
-                    >
-                      {item}
-                    </motion.span>
-                  ))}
-                </motion.div>
-              </motion.div>
-            );
-          })}
+          <SectionHeading eyebrow="Toolbox" title="Skills" />
         </div>
-          {editMode && (
-            <div className="mt-8">
-              <AddButton
-                label="Add skill group"
-                onClick={() => openEditor({ kind: "skills", id: null })}
-              />
-            </div>
-          )}
-        </div>
+        <SkillsBoard groups={content.skills} editControls={editControls} />
+        {editMode && (
+          <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-6">
+            <AddButton label="Add skill group" onClick={() => openEditor({ kind: "skills", id: null })} />
+          </div>
+        )}
       </div>
       <WaveDivider flip />
     </section>

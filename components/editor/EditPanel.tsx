@@ -112,7 +112,7 @@ function SaveCancelRow({
 function PersonalForm({ onClose }: { onClose: () => void }) {
   const { content, update } = useContent();
   const [draft, setDraft] = useState<Personal>(content.personal);
-  const set = (k: Exclude<keyof Personal, "resumes">) => (v: string) =>
+  const set = (k: Exclude<keyof Personal, "resumes" | "keywords">) => (v: string) =>
     setDraft((d) => ({ ...d, [k]: v }));
   // Resume options keep their ids (they are the /resume/<id> URLs); only the
   // menu label and the PDF file name are editable here.
@@ -130,6 +130,12 @@ function PersonalForm({ onClose }: { onClose: () => void }) {
       <Field label="GitHub URL" value={draft.github} onChange={set("github")} />
       <Field label="Location" value={draft.location} onChange={set("location")} />
       <TextArea label="Summary" value={draft.summary} onChange={set("summary")} rows={7} />
+      <StringListEditor
+        label="Focus keywords (the big words under the intro)"
+        items={draft.keywords ?? []}
+        onChange={(keywords) => setDraft((d) => ({ ...d, keywords }))}
+        addLabel="Add keyword"
+      />
       {draft.resumes.map((r, i) => (
         <div key={r.id} className="grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-2">
           <Field label={`Resume ${i + 1}: menu label`} value={r.label} onChange={setResume(i, "label")} />
@@ -138,7 +144,10 @@ function PersonalForm({ onClose }: { onClose: () => void }) {
       ))}
       <SaveCancelRow
         onSave={() => {
-          update((c) => ({ ...c, personal: draft }));
+          update((c) => ({
+            ...c,
+            personal: { ...draft, keywords: (draft.keywords ?? []).filter((k) => k.trim()) },
+          }));
           onClose();
         }}
         onCancel={onClose}

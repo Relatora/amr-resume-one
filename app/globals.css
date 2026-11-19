@@ -211,3 +211,88 @@ html.light .gradient-text {
       transparent 1px 3px
     );
 }
+
+/* ---- Paper-craft light theme ---- */
+
+/* Clouds sway a few vw back and forth while the page is still; the scroll
+   motion is layered on top in JS. */
+@keyframes paper-sway {
+  from { transform: translateX(-2.5vw); }
+  to { transform: translateX(2.5vw); }
+}
+.paper-sway {
+  animation: paper-sway 30s ease-in-out infinite alternate;
+}
+
+/* Paper raindrops: fall the height of the screen, leaning with the wind. */
+@keyframes paper-fall {
+  from { transform: translateY(-10vh) rotate(var(--lean, 0deg)); }
+  to { transform: translateY(110vh) rotate(var(--lean, 0deg)); }
+}
+.paper-fall {
+  animation: paper-fall 5s linear infinite;
+}
+
+/* Paper birds: a flock crosses the sky, each bird bobbing on its own, and
+   the wings beat twice and then glide, the way gulls fly, rather than
+   flapping without pause. */
+@keyframes paper-fly {
+  from { transform: translateX(-25vw); }
+  to { transform: translateX(125vw); }
+}
+.paper-fly {
+  animation: paper-fly 40s linear infinite;
+}
+@keyframes paper-bob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-7px); }
+}
+.paper-bob {
+  animation: paper-bob 2.6s ease-in-out infinite alternate;
+}
+@keyframes paper-flap {
+  0%, 36%, 100% { transform: scaleY(1); }
+  9%, 27% { transform: scaleY(-0.45); }
+  18% { transform: scaleY(1); }
+}
+.paper-flap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: paper-flap 2.4s ease-in-out infinite;
+  animation-delay: var(--flap-delay, 0s);
+}
+.paper-flap-far {
+  animation-delay: calc(var(--flap-delay, 0s) + 0.06s);
+}
+
+/* Focus keywords written across the sky, in Anton: a compact poster face,
+   so long phrases fit without sprawling. Each colour below is a relative
+   weight, balanced so no word shouts; the layer's opacity sets the overall
+   strength per theme (values tuned by eye on the live page). Light: sky
+   tints, no shadow (a shadow would show through the translucent letters).
+   Dark: faint accents. */
+.sky-layer-light { opacity: 0.9; }
+.sky-layer-dark { opacity: 0.11; }
+.sky-word {
+  font-family: var(--font-anton), var(--font-sans), sans-serif;
+  font-size: clamp(9rem, 7vw, 10rem);
+}
+.sky-word-light.sky-c0 { color: rgba(248, 176, 46, 0.59); }
+.sky-word-light.sky-c1 { color: rgba(240, 112, 84, 0.39); }
+.sky-word-light.sky-c2 { color: rgba(10, 156, 149, 0.27); }
+.sky-word-light.sky-c3 { color: rgba(124, 58, 237, 0.23); }
+.sky-word-light.sky-c4 { color: rgba(47, 128, 192, 0.3); }
+.sky-word-light.sky-c5 { color: rgba(255, 255, 255, 1); }
+.sky-word-dark.sky-c0 { color: rgba(251, 191, 36, 0.875); }
+.sky-word-dark.sky-c1 { color: rgba(251, 113, 133, 0.875); }
+.sky-word-dark.sky-c2 { color: rgba(45, 212, 191, 0.875); }
+.sky-word-dark.sky-c3 { color: rgba(177, 160, 252, 1); }
+.sky-word-dark.sky-c4 { color: rgba(96, 165, 250, 0.875); }
+.sky-word-dark.sky-c5 { color: rgba(231, 236, 246, 0.75); }
+
+/* The hero name, cut from paper in the light theme: a thin white edge
+   lifts it off whatever passes behind it (sky or cloud), and a soft shadow
+   below keeps it readable over white cloud. */
+html.light .hero-name {
+  filter: drop-shadow(0 2px 0 #ffffff) drop-shadow(0 8px 12px rgba(15, 40, 70, 0.3));
+}

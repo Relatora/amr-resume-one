@@ -10,6 +10,7 @@ import ReplayButton from "@/components/intro/ReplayButton";
 
 const NAV = [
   { href: "#experience", label: "Experience" },
+  { href: "#projects", label: "Projects" },
   { href: "#skills", label: "Skills" },
   { href: "#education", label: "Education" },
   { href: "#contact", label: "Contact" },

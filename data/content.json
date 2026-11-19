@@ -27,7 +27,15 @@
     ],
     "github": "https://github.com/Relatora",
     "location": "Canada",
-    "summary": "Senior Software Engineering Lead with 10+ years of hands-on engineering. I design and build systems that connect hardware, data, and people: real-time IoT telemetry on Azure, company-wide web applications behind a single authentication gateway, and a Copilot Studio agent that answers thousands of questions a month over enterprise quality and supply-chain data. I lead a team of engineers, own delivery from requirements and architecture through automated deployment, and still write production code every week."
+    "summary": "Senior Software Engineering Lead with 10+ years of hands-on engineering. I design and build systems that connect hardware, data, and people: real-time IoT telemetry on Azure, company-wide web applications behind a single authentication gateway, and a Copilot Studio agent that answers thousands of questions a month over enterprise quality and supply-chain data. I lead a team of engineers, own delivery from requirements and architecture through automated deployment, and still write production code every week.",
+    "keywords": [
+      "Solutions Architecture",
+      "Cloud & DevOps",
+      "Artificial Intelligence",
+      "Real-time IoT",
+      "Full-Stack Engineering",
+      "Technical Leadership"
+    ]
   },
   "experience": [
     {

@@ -4,13 +4,14 @@ import { motion } from "framer-motion";
 import { useContent } from "@/components/providers/ContentProvider";
 import { fadeUp } from "@/lib/motion";
 import ResumeMenu from "@/components/ui/ResumeMenu";
+import { OCEAN, PaperWaves } from "@/components/paper/Paper";
 
 export default function Contact() {
   const { content } = useContent();
   const { personal } = content;
 
   return (
-    <section id="contact" className="relative scroll-mt-20 overflow-hidden py-24">
+    <section id="contact" className="relative scroll-mt-20 overflow-hidden py-24 [.light_&]:pb-0">
       <div className="pointer-events-none absolute -bottom-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-violet-500/10 blur-3xl" />
       <motion.div
         variants={fadeUp}
@@ -44,6 +45,11 @@ export default function Contact() {
           Tailwind & Framer Motion
         </p>
       </motion.div>
+      {/* The page ends at sea in the light theme: the paper sun sinks to
+          set behind these waves as the visitor reaches the bottom. */}
+      <div className="relative z-10 mt-16 hidden [.light_&]:block">
+        <PaperWaves layers={OCEAN} height={220} className="h-40 sm:h-56" />
+      </div>
     </section>
   );
 }

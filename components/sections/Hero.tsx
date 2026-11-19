@@ -6,6 +6,7 @@ import { useEditor } from "@/components/providers/EditorProvider";
 import { EditButton } from "@/components/ui/EditControls";
 import ResumeMenu from "@/components/ui/ResumeMenu";
 import { fadeUp, stagger } from "@/lib/motion";
+import { PaperCloudBank } from "@/components/paper/Paper";
 
 export default function Hero() {
   const { content } = useContent();
@@ -24,13 +25,14 @@ export default function Hero() {
           them; mask-repeat has to be off or the gradient tiles. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 transition-opacity duration-500 [.light_&]:opacity-25 [mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [mask-repeat:no-repeat] [mask-size:100%_100%] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500 [.light_&]:hidden [mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [mask-repeat:no-repeat] [mask-size:100%_100%] [-webkit-mask-image:linear-gradient(to_bottom,black_0%,black_58%,transparent_96%)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]"
       >
         <div className="absolute -top-40 -left-40 h-[32rem] w-[32rem] rounded-full bg-teal-500/15 blur-3xl animate-blob" />
         <div className="absolute top-1/4 -right-32 h-[28rem] w-[28rem] rounded-full bg-violet-500/15 blur-3xl animate-blob-slow" />
         <div className="absolute bottom-24 left-1/4 h-96 w-96 rounded-full bg-amber-500/12 blur-3xl animate-blob" />
       </div>
-      <div className="absolute inset-0 dot-grid" />
+      <div className="absolute inset-0 dot-grid [.light_&]:hidden" />
+      <PaperCloudBank />
 
       <motion.div
         variants={stagger}
@@ -49,7 +51,7 @@ export default function Hero() {
           variants={fadeUp}
           className="font-display mt-4 text-5xl font-extrabold leading-[1.05] sm:text-7xl"
         >
-          <span className="gradient-text">{personal.name}</span>
+          <span className="gradient-text hero-name">{personal.name}</span>
         </motion.h1>
 
         <motion.p
@@ -108,9 +110,11 @@ export default function Hero() {
           <motion.span
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="block text-2xl text-ink-dim transition group-hover:text-accent-teal"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-canvas shadow-lg shadow-black/25 ring-4 ring-canvas/60 transition group-hover:bg-accent-teal"
           >
-            ↓
+            <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
           </motion.span>
         </motion.a>
       </motion.div>

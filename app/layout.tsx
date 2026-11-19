@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Sora } from "next/font/google";
+import { Anton, Geist, Geist_Mono, Sora } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -20,6 +20,9 @@ const sora = Sora({
   subsets: ["latin"],
 });
 
+// Compact poster face for the keywords written across the sky.
+const anton = Anton({ variable: "--font-anton", subsets: ["latin"], weight: ["400"] });
+
 export const metadata: Metadata = {
   title: `${content.personal.name} - ${content.personal.title}`,
   description: content.personal.summary,
@@ -36,7 +39,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} ${anton.variable} h-full antialiased`}
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         {/* Applies the saved theme before hydration, to avoid a flash */}

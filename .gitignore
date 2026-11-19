@@ -43,3 +43,9 @@ next-env.d.ts
 
 # Word lock files
 ~$*
+
+# Vendored design skills (see painter-quote CLAUDE.md for how to restore)
+# and their working files
+.claude/skills/
+.impeccable/
+PRODUCT.md

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored, gitignored design-skill scripts: not this project's code.
+    ".claude/**",
   ]),
 ]);
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { loadWeather, subscribeWeather } from "@/lib/weather";
 
 interface Star {
   x: number;
@@ -44,56 +43,34 @@ interface Comet {
   wobble: number;
 }
 
-// Light theme is a different sky entirely: overcast cloud with rain falling
-// through it, instead of stars.
-interface Cloud {
-  x: number;
-  y: number;
-  z: number; // depth: near clouds are larger, faster and more opaque
-  w: number;
-  h: number;
-  puffs: Array<{ dx: number; dy: number; r: number; a: number }>;
-  speed: number;
-}
-
-interface Drop {
-  x: number;
-  y: number;
-  z: number;
-  len: number;
-  speed: number;
-}
-
 interface Nebula {
   fx: number; // position as viewport fraction
   fy: number;
   fr: number; // radius as fraction of min(w,h)
   dark: string; // rgb triplet for dark theme
-  light: string; // rgb triplet for light theme
   phase: number;
   speed: number;
 }
 
 const NEBULAE: Nebula[] = [
-  { fx: 0.18, fy: 0.28, fr: 0.62, dark: "45,212,191", light: "13,148,136", phase: 0, speed: 0.05 },
-  { fx: 0.85, fy: 0.65, fr: 0.68, dark: "139,92,246", light: "124,58,237", phase: 2.1, speed: 0.04 },
-  { fx: 0.5, fy: 0.95, fr: 0.56, dark: "244,114,182", light: "251,146,60", phase: 4.2, speed: 0.06 },
+  { fx: 0.18, fy: 0.28, fr: 0.62, dark: "45,212,191", phase: 0, speed: 0.05 },
+  { fx: 0.85, fy: 0.65, fr: 0.68, dark: "139,92,246", phase: 2.1, speed: 0.04 },
+  { fx: 0.5, fy: 0.95, fr: 0.56, dark: "244,114,182", phase: 4.2, speed: 0.06 },
 ];
 
 // Scene feature switches. Comets are built and working but held back for now.
 const FEATURES = {
   comets: false,
-  liveWeather: true, // light theme mirrors the visitor's real conditions
 };
 
 // Black hole placement/size as viewport fractions - shared between the
 // renderer and the star loop (stars behind the event horizon are occluded).
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 
-// Full-viewport animated space scene behind the site.
-// Dark theme: twinkling stars, nebulas, comets, and a Gargantua-style
-// black hole. Light theme: an overcast sky with rain falling through drifting
-// cloud. Scrolling sends the stars to warp, and the rain to streak.
+// Full-viewport animated space scene behind the dark theme: twinkling stars,
+// nebulas, comets, and a Gargantua-style black hole. Scrolling sends the
+// stars to warp. The light theme has its own paper-craft sky (PaperSky), so
+// this canvas clears itself and idles while the page is light.
 export default function Galaxy() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -112,33 +89,13 @@ export default function Galaxy() {
     let moteSprites: HTMLCanvasElement[] = [];
     let scrollY = window.scrollY; // absolute offset, for parallax
     const comets: Comet[] = [];
-    let clouds: Cloud[] = [];
-    let rain: Drop[] = [];
     let prevT = -1; // for a real delta time, so motion is frame-rate independent
-    // Live conditions for the light theme. Defaults are what shows before the
-    // lookup lands, and what stays if it never does.
-    let weather = { rain: 0, snow: false, cloud: 0.7, wind: 0.2, label: "" };
-    let weatherAsked = false;
-    let unsubWeather: (() => void) | null = null;
-    let rainSeeds: Float32Array | null = null;
     let raf = 0;
     let warp = 0;
     let scrollAccum = 0;
     let lastScrollY = window.scrollY;
 
     const isLight = () => document.documentElement.classList.contains("light");
-
-    // Only ask once, and only when the light sky is on screen - a dark-theme
-    // visitor should not pay for a request they will never see the effect of.
-    const ensureWeather = () => {
-      if (weatherAsked || !FEATURES.liveWeather) return;
-      weatherAsked = true;
-      // shared with the header chip, so the page makes one lookup, not two
-      unsubWeather = subscribeWeather((w) => {
-        weather = { rain: w.rain, snow: !!w.snow, cloud: w.cloud, wind: w.wind, label: w.label };
-      });
-      loadWeather();
-    };
 
     const onScroll = () => {
       const y = window.scrollY;
@@ -186,43 +143,6 @@ export default function Galaxy() {
           tint: Math.floor(Math.random() * 3),
         };
       });
-      // Light theme population: a few layered cloud masses and a rain field.
-      const cloudCount = Math.max(7, Math.min(12, Math.round(width / 170)));
-      clouds = Array.from({ length: cloudCount }, () => {
-        const z = Math.random();
-        const w = (0.22 + z * 0.3) * width;
-        const h = w * (0.3 + Math.random() * 0.2);
-        // each cloud is a cluster of soft puffs, so the silhouette is lumpy
-        const n = 5 + Math.floor(Math.random() * 4);
-        return {
-          x: Math.random() * (width + w) - w / 2,
-          y: Math.random() * height * 0.62 - h * 0.2,
-          z,
-          w,
-          h,
-          speed: 4 + z * 16,
-          puffs: Array.from({ length: n }, (_, i) => ({
-            dx: (i / (n - 1) - 0.5) * w * 0.8 + (Math.random() - 0.5) * w * 0.12,
-            dy: (Math.random() - 0.5) * h * 0.5,
-            r: h * (0.5 + Math.random() * 0.55),
-            a: 0.2 + Math.random() * 0.22,
-          })),
-        };
-      });
-
-      const dropCount = Math.min(420, Math.floor((width * height) / 3400));
-      rainSeeds = new Float32Array(dropCount).map(() => Math.random());
-      rain = Array.from({ length: dropCount }, () => {
-        const z = Math.random();
-        return {
-          x: Math.random() * width,
-          y: Math.random() * height,
-          z,
-          len: 7 + z * 20,
-          speed: 420 + z * 900,
-        };
-      });
-
       buildMotes();
     };
 
@@ -234,19 +154,10 @@ export default function Galaxy() {
       [150, 130, 210],
       [210, 160, 190],
     ];
-    const MOTE_LIGHT: Array<[number, number, number]> = [
-      [90, 110, 150],
-      [110, 95, 155],
-      [150, 115, 135],
-    ];
-    let moteTheme = "";
-
-    const buildMotes = (light = isLight()) => {
-      const key = light ? "light" : "dark";
-      if (moteTheme === key && moteSprites.length) return;
-      moteTheme = key;
+    const buildMotes = () => {
+      if (moteSprites.length) return;
       const size = 128;
-      moteSprites = (light ? MOTE_LIGHT : MOTE_DARK).map(([r, g, b]) => {
+      moteSprites = MOTE_DARK.map(([r, g, b]) => {
         const c = document.createElement("canvas");
         c.width = size;
         c.height = size;
@@ -287,12 +198,12 @@ export default function Galaxy() {
 
     // Depth haze: a soft band of galactic light plus corner falloff. Two
     // gradient fills, which is what gives the emptiness somewhere to recede to.
-    const drawHaze = (light: boolean) => {
+    const drawHaze = () => {
       const bandY = height * 0.52;
       const bandH = height * 0.42;
       const band = ctx.createLinearGradient(0, bandY - bandH, 0, bandY + bandH);
-      const hz = light ? "120,140,190" : "150,170,220";
-      const hzA = light ? 0.05 : 0.055;
+      const hz = "150,170,220";
+      const hzA = 0.055;
       band.addColorStop(0, `rgba(${hz},0)`);
       band.addColorStop(0.5, `rgba(${hz},${hzA})`);
       band.addColorStop(1, `rgba(${hz},0)`);
@@ -304,115 +215,12 @@ export default function Galaxy() {
         width / 2, height / 2, maxD * 0.55,
         width / 2, height / 2, maxD
       );
-      const vc = light ? "120,130,160" : "3,5,12";
-      const va = light ? 0.16 : 0.42;
+      const vc = "3,5,12";
+      const va = 0.42;
       vig.addColorStop(0, `rgba(${vc},0)`);
       vig.addColorStop(1, `rgba(${vc},${va})`);
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, width, height);
-    };
-
-    // --- overcast sky, clouds and rain (light theme) ----------------------
-    // An overcast wash: cooler and heavier at the top, opening up toward the
-    // horizon, which is what stops a grey sky reading as flat grey.
-    const drawOvercast = () => {
-      const k = 0.35 + weather.cloud * 0.65; // clear skies stay pale
-      const g = ctx.createLinearGradient(0, 0, 0, height);
-      g.addColorStop(0, `rgba(150,168,196,${(0.42 * k).toFixed(3)})`);
-      g.addColorStop(0.45, `rgba(176,190,214,${(0.26 * k).toFixed(3)})`);
-      g.addColorStop(0.78, `rgba(214,220,232,${(0.12 * k).toFixed(3)})`);
-      g.addColorStop(1, `rgba(236,238,244,0.02)`);
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, width, height);
-    };
-
-    // Clouds are clusters of soft puffs stamped from the mote sprite, so they
-    // cost the same as the dust field. Depth drives size, speed and weight.
-    const drawClouds = (t: number, near: boolean) => {
-      if (!moteSprites.length) return;
-      const sprite = moteSprites[0];
-      // a clear sky keeps a wisp or two; an overcast one packs them in
-      const cover = 0.25 + weather.cloud * 1.15;
-      for (const c of clouds) {
-        if (near !== c.z >= 0.5) continue;
-        if (c.z > weather.cloud * 1.25 + 0.15) continue; // fewer clouds when clear
-        const span = width + c.w * 2;
-        const x = (((c.x - t * c.speed) % span) + span) % span - c.w;
-        const y = c.y + scrollY * (0.04 + c.z * 0.4);
-        for (const p of c.puffs) {
-          // a touch of vertical breathing keeps the mass from looking rigid
-          const bob = Math.sin(t * 0.12 + p.dx * 0.01) * c.h * 0.06;
-          ctx.globalAlpha = p.a * (0.6 + c.z * 0.4) * cover;
-          ctx.drawImage(
-            sprite,
-            x + p.dx - p.r,
-            y + p.dy + bob - p.r,
-            p.r * 2,
-            p.r * 2
-          );
-        }
-      }
-      ctx.globalAlpha = 1;
-    };
-
-    // Rain. Every drop is a short line; they are all stroked in one path per
-    // depth band, so the whole field is a handful of draw calls rather than
-    // several hundred. Scrolling lengthens the streaks, reusing the warp idea.
-    const drawRain = (dt: number, animate: boolean, gust: number) => {
-      // Real conditions drive the field: how much falls, how hard it leans,
-      // and whether it falls as snow.
-      const amount = weather.rain;
-      if (amount <= 0.001) return; // genuinely dry out there - draw nothing
-      const snow = weather.snow;
-      const tilt = snow
-        ? weather.wind * 0.25
-        : 0.1 + weather.wind * 0.45 + gust * 0.05;
-      const fallScale = snow ? 0.16 : 0.55 + amount * 0.75;
-      for (const band of [0, 1, 2]) {
-        const lo = band / 3;
-        const hi = (band + 1) / 3;
-        ctx.beginPath();
-        let any = false;
-        for (let i = 0; i < rain.length; i++) {
-          const d = rain[i];
-          if (d.z < lo || d.z >= hi) continue;
-          // thin the field by intensity using a fixed per-drop seed, so
-          // lighter rain drops drops rather than reshuffling the whole sky
-          if (rainSeeds && rainSeeds[i] > amount) continue;
-          if (animate) {
-            d.y += d.speed * dt * fallScale;
-            d.x += d.speed * dt * fallScale * tilt;
-            if (snow) d.x += Math.sin(d.y * 0.02 + i) * 14 * dt;
-            if (d.y > height + 20) {
-              d.y = -20 - Math.random() * height * 0.2;
-              d.x = Math.random() * (width + 200) - 100;
-            }
-            if (d.x > width + 100) d.x -= width + 200;
-            if (d.x < -100) d.x += width + 200;
-          }
-          if (snow) {
-            // flakes are specks, not streaks
-            ctx.moveTo(d.x + 0.8, d.y);
-            ctx.arc(d.x, d.y, 0.8 + d.z * 1.4, 0, Math.PI * 2);
-          } else {
-            const L = d.len * (0.6 + amount * 0.7) * (1 + gust * 0.9);
-            ctx.moveTo(d.x, d.y);
-            ctx.lineTo(d.x - L * tilt, d.y - L);
-          }
-          any = true;
-        }
-        if (!any) continue;
-        const z = (lo + hi) / 2;
-        if (snow) {
-          // a cool mid-tone, so flakes read against bright sky and dark cloud alike
-          ctx.fillStyle = `rgba(178,197,224,${(0.5 + z * 0.4).toFixed(3)})`;
-          ctx.fill();
-        } else {
-          ctx.strokeStyle = `rgba(120,140,175,${(0.12 + z * 0.3).toFixed(3)})`;
-          ctx.lineWidth = 0.6 + z * 1.0;
-          ctx.stroke();
-        }
-      }
     };
 
     // --- comets -----------------------------------------------------------
@@ -498,7 +306,7 @@ export default function Galaxy() {
       }
     };
 
-    const drawNebulae = (t: number, light: boolean) => {
+    const drawNebulae = (t: number) => {
       const minDim = Math.min(width, height);
       for (const n of NEBULAE) {
         const wobX = Math.sin(t * n.speed + n.phase) * width * 0.03;
@@ -506,8 +314,8 @@ export default function Galaxy() {
         const x = n.fx * width + wobX;
         const y = n.fy * height + wobY;
         const r = n.fr * minDim;
-        const rgb = light ? n.light : n.dark;
-        const alpha = light ? 0.17 : 0.26;
+        const rgb = n.dark;
+        const alpha = 0.26;
         const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
         grad.addColorStop(0, `rgba(${rgb},${alpha})`);
         grad.addColorStop(0.35, `rgba(${rgb},${alpha * 0.6})`);
@@ -885,174 +693,14 @@ export default function Galaxy() {
       // rim; the traced photon ring above is the real thing, so it is gone
     };
 
-    // The light theme's counterpart. On a near-white canvas you cannot signal
-    // brightness with brightness - white on white is invisible, which is why
-    // the old pale disc read as faint. Luminosity here comes from saturation,
-    // from a limb-darkened photosphere that behaves like an object, and from
-    // the star occluding the constellation behind it. The old version's hard
-    // 1.4px stroked ring is gone; that was the tell that made it look fake.
-    const SUN_FR = 0.065; // radius as a fraction of min(viewport)
-    const SUN_FX = 0.8;
-    const SUN_FY = 0.22;
-    const SUN_DISC = 1.06; // photosphere radius in units of R
-
-    let sunSprite: HTMLCanvasElement | null = null;
-    let sunSpriteCtx: CanvasRenderingContext2D | null = null;
-    let sunSpriteR = 0;
-    let sunT = -1;
-
-    const sunCenter = () => ({
-      cx: width * SUN_FX,
-      cy: height * SUN_FY,
-      r: Math.min(width, height) * SUN_FR,
-    });
-
-    // Deterministic value noise - photosphere granulation.
-    const vnoise = (x: number, y: number) => {
-      const xi = Math.floor(x), yi = Math.floor(y);
-      const xf = x - xi, yf = y - yi;
-      const hsh = (a: number, b: number) => {
-        let n = (a * 374761393 + b * 668265263) | 0;
-        n = (n ^ (n >> 13)) * 1274126177;
-        return ((n ^ (n >> 16)) >>> 0) / 4294967296;
-      };
-      const u = xf * xf * (3 - 2 * xf);
-      const v = yf * yf * (3 - 2 * yf);
-      return (
-        hsh(xi, yi) * (1 - u) * (1 - v) + hsh(xi + 1, yi) * u * (1 - v) +
-        hsh(xi, yi + 1) * (1 - u) * v + hsh(xi + 1, yi + 1) * u * v
-      );
-    };
-
-    // Only the photosphere needs per-pixel work, and it is small (~130px
-    // across), so it is baked into a sprite and refreshed a few times a
-    // second while the granulation churns. The corona is drawn with
-    // gradients every frame, which is essentially free.
-    const buildSun = (R: number, t: number) => {
-      const RD = R * SUN_DISC;
-      const size = Math.ceil(2 * RD + 4);
-      if (size < 4) return;
-      if (!sunSprite || sunSprite.width !== size) {
-        const c = document.createElement("canvas");
-        c.width = size;
-        c.height = size;
-        sunSprite = c;
-        sunSpriteCtx = c.getContext("2d");
-      }
-      if (!sunSpriteCtx) return;
-      const img = sunSpriteCtx.createImageData(size, size);
-      const d = img.data;
-      const mid = size / 2;
-      for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-          const dx = x + 0.5 - mid, dy = y + 0.5 - mid;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist > RD + 1.5) continue;
-          // antialiased limb
-          const e = Math.max(0, Math.min(1, (dist - (RD - 1)) / 2));
-          const cov = 1 - e * e * (3 - 2 * e);
-          if (cov <= 0.002) continue;
-          const u = Math.min(1, dist / RD);
-          // classic limb darkening: I/I0 = 1 - eps(1 - mu)
-          const mu = Math.sqrt(Math.max(0, 1 - u * u));
-          const limb = 1 - 0.62 * (1 - mu);
-          const g =
-            0.5 * vnoise(dx / (R * 0.16) + t * 0.05, dy / (R * 0.16) - t * 0.04) +
-            0.5 * vnoise(dx / (R * 0.07) - t * 0.09, dy / (R * 0.07) + t * 0.06);
-          const shade = limb * (0.93 + 0.14 * (g - 0.5));
-          const k = Math.pow(shade, 0.95);
-          const q = (y * size + x) * 4;
-          d[q] = 255;
-          d[q + 1] = 150 + 105 * k;
-          d[q + 2] = 40 + 200 * Math.pow(k, 2.6);
-          d[q + 3] = Math.round(Math.min(1, cov * (0.9 + 0.1 * k)) * 255);
-        }
-      }
-      sunSpriteCtx.putImageData(img, 0, 0);
-      sunSpriteR = R;
-    };
-
-    const drawSun = (t: number) => {
-      const { cx, cy, r } = sunCenter();
-      const breathe = 0.97 + 0.03 * Math.sin(t * 0.6);
-      const R = r * breathe;
-      const RC = R * 5.2;
-
-      // Corona: a tight collar plus a wide bloom, both saturated enough to
-      // register against #f5f7fc.
-      const collar = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.9);
-      collar.addColorStop(0, `rgba(255,214,190,${0.5 * breathe})`);
-      collar.addColorStop(0.45, `rgba(255,196,132,${0.2 * breathe})`);
-      collar.addColorStop(1, "rgba(255,186,110,0)");
-      ctx.fillStyle = collar;
-      ctx.fillRect(cx - R * 1.9, cy - R * 1.9, R * 3.8, R * 3.8);
-
-      const bloom = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, RC);
-      bloom.addColorStop(0, `rgba(255,190,120,${0.30 * breathe})`);
-      bloom.addColorStop(0.35, `rgba(253,186,116,${0.12 * breathe})`);
-      bloom.addColorStop(1, "rgba(251,191,120,0)");
-      ctx.fillStyle = bloom;
-      ctx.fillRect(cx - RC, cy - RC, RC * 2, RC * 2);
-
-      // Streamers: soft wedges that drift, so the corona is never a perfect
-      // circle. Cheap - a handful of gradient-filled triangles.
-      ctx.save();
-      ctx.translate(cx, cy);
-      for (let i = 0; i < 7; i++) {
-        const ang = (i / 7) * Math.PI * 2 + t * 0.05 + Math.sin(i * 2.3) * 0.4;
-        const len = RC * (0.55 + 0.3 * (0.5 + 0.5 * Math.sin(i * 1.7 + t * 0.13)));
-        const halfA = 0.16 + 0.07 * Math.sin(i * 3.1 + t * 0.09);
-        const gr = ctx.createRadialGradient(0, 0, R, 0, 0, len);
-        gr.addColorStop(0, `rgba(255,201,140,${0.13 * breathe})`);
-        gr.addColorStop(1, "rgba(255,201,140,0)");
-        ctx.fillStyle = gr;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, len, ang - halfA, ang + halfA);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // A whisper of diffraction, well short of a hard lens-flare cross.
-      for (const [ang, len, wid, amp] of [
-        [0, 2.9, 0.30, 0.085],
-        [Math.PI / 2, 2.2, 0.26, 0.055],
-        [Math.PI, 2.9, 0.30, 0.085],
-        [-Math.PI / 2, 2.2, 0.26, 0.055],
-      ]) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(ang);
-        const L = R * len;
-        const gr = ctx.createLinearGradient(R * 0.9, 0, L, 0);
-        gr.addColorStop(0, `rgba(255,214,150,${amp * breathe})`);
-        gr.addColorStop(1, "rgba(255,214,150,0)");
-        ctx.fillStyle = gr;
-        ctx.beginPath();
-        ctx.moveTo(R * 0.9, -R * wid * 0.35);
-        ctx.lineTo(L, -R * wid);
-        ctx.lineTo(L, R * wid);
-        ctx.lineTo(R * 0.9, R * wid * 0.35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Photosphere. Rebuilt a few times a second so the granulation churns;
-      // blitted every frame.
-      if (!sunSprite || Math.abs(R - sunSpriteR) > R * 0.06 || sunT < 0 || Math.abs(t - sunT) > 0.12) {
-        buildSun(R, t);
-        sunT = t;
-      }
-      if (sunSprite) {
-        const half = sunSprite.width / 2;
-        ctx.drawImage(sunSprite, cx - half, cy - half);
-      }
-    };
     const drawFrame = (animate: boolean, t: number) => {
       ctx.clearRect(0, 0, width, height);
-      const light = isLight();
+      // The light theme draws its own sky in the DOM; leave the canvas
+      // transparent and skip every per-frame cost while it is showing.
+      if (isLight()) {
+        prevT = -1;
+        return;
+      }
       // clamped so a backgrounded tab returning does not teleport anything
       const dt = prevT < 0 ? 0.016 : Math.min(0.05, Math.max(0, t - prevT));
       prevT = t;
@@ -1065,32 +713,18 @@ export default function Galaxy() {
         if (warp < 0.05) warp = 0;
       }
 
-      buildMotes(light);
-      if (light) ensureWeather();
-      if (light) {
-        // Overcast sky: wash, then the sun diffused behind the cloud deck,
-        // then far cloud. Near cloud goes on after the rain so some of the
-        // weather falls behind it.
-        drawOvercast();
-        // dimmed hard: through cloud this should read as a bright patch of
-        // sky rather than a disc with a limb
-        ctx.globalAlpha = 0.32 + (1 - weather.cloud) * 0.6;
-        drawSun(t);
-        ctx.globalAlpha = 1;
-        drawClouds(t, false);
-      } else {
-        drawNebulae(t, light);
-        drawHaze(light);
-        drawDust(t, false); // far motes sit behind everything
-        drawBlackHole(t);
-      }
+      buildMotes();
+      drawNebulae(t);
+      drawHaze();
+      drawDust(t, false); // far motes sit behind everything
+      drawBlackHole(t);
 
-      const rgb = light ? "55,48,163" : "226,238,255";
-      const maxAlpha = light ? 0.55 : 0.85;
+      const rgb = "226,238,255";
+      const maxAlpha = 0.85;
       const warpCx = width / 2;
       const warpCy = height * 0.45;
       const maxDist = Math.hypot(warpCx, warpCy);
-      // stars vanish behind the event horizon (dark theme only)
+      // stars vanish behind the event horizon
       const bhX = width * BH.fx;
       const bhY = height * BH.fy;
       const bhR = Math.min(width, height) * BH.fr;
@@ -1102,21 +736,15 @@ export default function Galaxy() {
         const y = st.y + scrollY * (0.08 + st.z * 0.55);
         return ((y % height) + height) % height;
       };
-      // the light theme's occluder
-      const sunX = width * SUN_FX;
-      const sunY = height * SUN_FY;
-      const sunR = Math.min(width, height) * SUN_FR * SUN_DISC;
 
-      // The light theme has no stars any more - it is weather, not space.
-      for (const s of light ? [] : stars) {
+      for (const s of stars) {
         if (animate) {
           s.twinkle += s.twinkleSpeed;
           s.x -= s.drift;
           if (s.x < -2) s.x = width + 2;
         }
         const sy = starY(s);
-        if (!light && Math.hypot(s.x - bhX, sy - bhY) < bhR) continue;
-        if (light && Math.hypot(s.x - sunX, sy - sunY) < sunR) continue;
+        if (Math.hypot(s.x - bhX, sy - bhY) < bhR) continue;
         // depth also dims: the far field is fainter as well as smaller
         const depthA = 0.34 + s.z * 0.66;
         const alpha = maxAlpha * depthA * (0.35 + 0.65 * Math.abs(Math.sin(s.twinkle)));
@@ -1141,16 +769,8 @@ export default function Galaxy() {
         }
       }
 
-      if (!light) drawDust(t, true); // near motes drift in front of the stars
-
-      if (light) {
-        const gust = Math.min(1, warp / 14); // scrolling stretches the streaks
-        drawRain(dt, animate, gust);
-        drawClouds(t, true);
-        drawHaze(light);
-      } else if (FEATURES.comets) {
-        drawComets(dt, animate);
-      }
+      drawDust(t, true); // near motes drift in front of the stars
+      if (FEATURES.comets) drawComets(dt, animate);
     };
 
     const loop = (now: number) => {
@@ -1184,7 +804,6 @@ export default function Galaxy() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", onScroll);
       observer.disconnect();
-      unsubWeather?.();
     };
   }, []);
 

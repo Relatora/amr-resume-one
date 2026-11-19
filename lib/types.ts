@@ -16,6 +16,9 @@ export interface Personal {
   github: string;
   location: string;
   summary: string;
+  // Big words for the focus band under the hero. Optional so content saved
+  // in a browser before the band existed still loads.
+  keywords?: string[];
 }
 
 export interface ExperienceEntry {
