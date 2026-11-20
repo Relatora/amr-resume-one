@@ -34,6 +34,7 @@ float noise(vec2 p) {
   return mix(mix(hash12(i), hash12(i + vec2(1, 0)), u.x),
              mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), u.x), u.y);
 }
+vec2 rot(vec2 v, float a) { float c = cos(a), s = sin(a); return vec2(c * v.x - s * v.y, s * v.x + c * v.y); }
 const mat2 ROT = mat2(0.8, 0.6, -0.6, 0.8);
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
@@ -69,12 +70,15 @@ uniform vec2 uView;     // viewport, CSS px
 uniform float uScale;   // CSS px per gas texel
 uniform float uTime;
 uniform float uScroll;  // page scroll, CSS px
+uniform float uRoll;    // slow roll of the whole sky, radians
 uniform float uNebula;  // 0/1 toggles
 uniform float uMilky;
 out vec4 frag;
 
 void main() {
   vec2 p = vec2(gl_FragCoord.x, (uView.y / uScale) - gl_FragCoord.y) * uScale;
+  // the sky rolls about the screen centre (the stars do the same)
+  p = uView * 0.5 + rot(p - uView * 0.5, -uRoll);
   vec3 col = vec3(0.0);
 
   if (uNebula > 0.5) {
@@ -114,6 +118,8 @@ uniform float uDpr;      // device px per CSS px for this canvas
 uniform float uTime;
 uniform float uScroll;
 uniform float uVel;      // smoothed scroll speed, stretches stars
+uniform float uTravel;   // distance flown, in star-layer cycles
+uniform float uRoll;     // slow roll of the whole sky, radians
 uniform vec3 uBH;        // centre x, y and shadow radius, CSS px
 uniform float uStars, uMilky, uHole, uLens, uMapReady;
 uniform sampler2D uGas;  // pass 1
@@ -139,7 +145,10 @@ vec3 starTint(float t) {
 // One layer of stars on a jittered grid. Most are faint; a power law on
 // the magnitude makes a few bright. The brightest get a halo and, when
 // spikes > 0, the four-point diffraction cross of a telescope image.
-vec3 stars(vec2 p, float cell, float dens, float seed, float gain, float spikes) {
+// p is in the layer's own space; zoom maps it to screen pixels (a layer
+// flying toward the viewer spreads its stars apart), and fast scrolling
+// streaks each star along rdir, the direction of travel on screen.
+vec3 stars(vec2 p, float cell, float dens, float seed, float gain, float spikes, float zoom, vec2 rdir) {
   vec3 acc = vec3(0.0);
   vec2 g0 = floor(p / cell);
   for (int j = -1; j <= 1; j++) {
@@ -148,13 +157,14 @@ vec3 stars(vec2 p, float cell, float dens, float seed, float gain, float spikes)
       vec3 h = hash32(c + seed);
       if (h.x > dens) continue;
       vec2 pos = (c + 0.1 + 0.8 * h.yz) * cell;
-      vec2 d = p - pos;
-      d.y /= 1.0 + uVel; // fast scrolling smears stars into short streaks
+      vec2 d = (p - pos) * zoom;
+      float along = dot(d, rdir);
+      d += rdir * (along / (1.0 + uVel) - along); // motion streak
       float m = hash12(c * 1.37 + seed);
       float I = gain * (0.08 + 1.4 * pow(m, 7.0));
       // scintillation: small, fast, different for every star
       I *= 0.78 + 0.22 * sin(uTime * (1.3 + 3.7 * h.y) + h.z * 6.283);
-      float s = 0.42 + 0.9 * pow(m, 3.0);
+      float s = (0.42 + 0.9 * pow(m, 3.0)) * (1.0 + 0.16 * log2(zoom)); // nearer, larger
       float r2 = dot(d, d);
       float v = exp(-r2 / (s * s));
       if (m > 0.75) v += 0.06 * exp(-sqrt(r2) / (2.0 + 5.0 * m));
@@ -168,20 +178,36 @@ vec3 stars(vec2 p, float cell, float dens, float seed, float gain, float spikes)
   return acc;
 }
 
+// Forward flight. Star layers stream outward from a vanishing point at the
+// screen centre, each looping from far (dense, faint, slow) to near (sparse,
+// bright, fast) and fading at both ends, so the loop never shows. uTravel
+// moves them along; uRoll turns the whole sky slowly about the same point.
+// Each pass through the loop reseeds a layer, so the stars never repeat.
+const int FLIGHT_LAYERS = 4;
+
 vec3 sky(vec2 q) {
   // GL textures count rows from the bottom; the page counts from the top
   vec3 col = texture(uGas, vec2(q.x / uView.x, 1.0 - q.y / uView.y)).rgb;
+  vec2 c = uView * 0.5;
+  vec2 d = rot(q - c, -uRoll);
+  vec2 rdir = d / max(length(d), 1.0);
   if (uStars > 0.5) {
-    // three depths, each with its own parallax against the scroll
-    col += stars(q + vec2(0.0, uScroll * 0.04), 7.0, 0.30, 1.0, 0.42, 0.0);
-    col += stars(q + vec2(0.0, uScroll * 0.12), 19.0, 0.42, 7.0, 0.85, 0.0);
-    col += stars(q + vec2(0.0, uScroll * 0.30), 74.0, 0.55, 13.0, 1.55, 1.0);
+    // the farthest stars only roll: a fixed backdrop to fly against
+    col += stars(d, 7.0, 0.30, 1.0, 0.42, 0.0, 1.0, rdir);
+    for (int i = 0; i < FLIGHT_LAYERS; i++) {
+      float u = uTravel + float(i) / float(FLIGHT_LAYERS);
+      float z = fract(u);                    // 0 far .. 1 near
+      float zoom = exp2(z * 4.0);            // 1x .. 16x
+      float fade = smoothstep(0.0, 0.22, z) * (1.0 - smoothstep(0.8, 1.0, z));
+      float seed = 7.0 + float(i) * 5.0 + floor(u) * 13.0;
+      col += stars(d / zoom, 16.0, 0.45, seed, (0.5 + 1.1 * z) * fade, z > 0.5 ? 1.0 : 0.0, zoom, rdir);
+    }
     if (uMilky > 0.5) {
       // the band is where the distant stars crowd together
-      vec2 bq = q + vec2(0.0, uScroll * 0.05);
+      vec2 bq = c + d + vec2(0.0, uScroll * 0.05);
       vec2 b = band(bq, uView);
       float crowd = b.x * (1.0 - 0.9 * b.y);
-      if (crowd > 0.02) col += stars(bq, 4.0, 0.55 * crowd, 21.0, 0.32 * crowd, 0.0);
+      if (crowd > 0.02) col += stars(bq, 4.0, 0.55 * crowd, 21.0, 0.32 * crowd, 0.0, 1.0, rdir);
     }
   }
   return col;
@@ -195,7 +221,6 @@ vec3 gasTint(float t) {
   return mix(c, vec3(0.82, 0.88, 1.0), smoothstep(0.85, 1.0, t));
 }
 
-vec2 rot(vec2 v, float a) { float c = cos(a), s = sin(a); return vec2(c * v.x - s * v.y, s * v.x + c * v.y); }
 
 void main() {
   // CSS px with y down, like the page

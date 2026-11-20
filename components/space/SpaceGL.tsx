@@ -16,6 +16,14 @@ import { SPACE_FEATURES as F } from "./flags";
 // Black hole placement: viewport fractions, the same as the canvas version.
 const BH = { fx: 0.78, fy: 0.3, fr: 0.11 };
 const GAS_DOWNSCALE = 4; // gas pass renders at a quarter of CSS resolution
+
+// The sense of flight: the page drifts forward through the stars on its
+// own, scrolling down flies faster (scrolling up eases back), and the sky
+// rolls slowly about the centre of the screen.
+const CRUISE = 0.018; // star-layer cycles per second at rest
+const SCROLL_THRUST = 0.00006; // cycles per pixel scrolled
+const ROLL_RATE = 0.012; // radians per second, about one turn in 9 minutes
+const ROLL_SCROLL = 0.00003; // extra roll per pixel scrolled
 const MAX_DPR = 2;
 
 
@@ -144,6 +152,11 @@ export default function SpaceGL({ onFail }: { onFail: () => void }) {
     let scrollY = window.scrollY;
     let lastY = scrollY;
     let vel = 0;
+    // Flight state, accumulated each frame. Travel wraps at whole cycles,
+    // which the shader cannot tell apart; roll wraps at a full turn.
+    let travel = 0;
+    let roll = 0;
+    let lastT = -1;
     const onScroll = () => {
       scrollY = window.scrollY;
       if (reduced) draw(0);
@@ -153,9 +166,15 @@ export default function SpaceGL({ onFail }: { onFail: () => void }) {
     const isLight = () => document.documentElement.classList.contains("light");
     const draw = (t: number) => {
       if (isLight()) return;
-      // eased scroll speed, for the star streaks
+      // Eased scroll speed for the star streaks, and the flight itself.
+      // Reduced motion keeps the sky still.
       if (!reduced) {
-        vel += (Math.min(3, Math.abs(scrollY - lastY) * 0.05) - vel) * 0.15;
+        const dy = scrollY - lastY;
+        const dt = lastT < 0 ? 0 : Math.min(0.05, Math.max(0, t - lastT)); // no jump after a hidden tab
+        lastT = t;
+        vel += (Math.min(3, Math.abs(dy) * 0.05) - vel) * 0.15;
+        travel = (((travel + CRUISE * dt + dy * SCROLL_THRUST) % 1) + 1) % 1; // a big scroll up stays in [0, 1)
+        roll = (roll + ROLL_RATE * dt + dy * ROLL_SCROLL) % (Math.PI * 2);
         lastY = scrollY;
       }
 
@@ -167,6 +186,7 @@ export default function SpaceGL({ onFail }: { onFail: () => void }) {
       gl.uniform1f(gas.u("uScale"), GAS_DOWNSCALE);
       gl.uniform1f(gas.u("uTime"), t);
       gl.uniform1f(gas.u("uScroll"), scrollY);
+      gl.uniform1f(gas.u("uRoll"), roll);
       gl.uniform1f(gas.u("uNebula"), F.nebula ? 1 : 0);
       gl.uniform1f(gas.u("uMilky"), F.milkyWay ? 1 : 0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -180,6 +200,8 @@ export default function SpaceGL({ onFail }: { onFail: () => void }) {
       gl.uniform1f(sky.u("uTime"), t);
       gl.uniform1f(sky.u("uScroll"), scrollY);
       gl.uniform1f(sky.u("uVel"), reduced ? 0 : vel);
+      gl.uniform1f(sky.u("uTravel"), travel);
+      gl.uniform1f(sky.u("uRoll"), roll);
       gl.uniform3f(sky.u("uBH"), cssW * BH.fx, cssH * BH.fy, Math.min(cssW, cssH) * BH.fr);
       gl.uniform1f(sky.u("uStars"), F.stars ? 1 : 0);
       gl.uniform1f(sky.u("uMilky"), F.milkyWay ? 1 : 0);
