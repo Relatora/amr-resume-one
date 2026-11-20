@@ -217,17 +217,17 @@ function PaperSun({ rotate }: { rotate: MotionValue<number> }) {
   );
 }
 
-// Sunbeams cut from paper: long tapered strips fanning out from the sun,
-// each a pale front sheet over a slightly wider golden one, fading toward
-// the tip. They sit behind the clouds, so when a cloud crosses the sun the
-// beams shine out around its edges. No blur filter: the layer is several
-// screens wide, and a filter on it would cost far more than flat sheets.
-const BEAMS = 14;
+// Sunbeams cut from paper, for when a cloud covers the sun: a fan of
+// tapered strips, each a cream sheet over a slightly wider gold one,
+// fading toward the tip. Kept deliberately simple. No blur filter: the
+// layer is several screens wide, and flat sheets cost almost nothing.
+const BEAMS = 12;
+
 function SunRays() {
   const beam = (i: number, back: boolean) => {
-    const half = (i % 2 ? 1.8 : 3.0) + (back ? 0.7 : 0); // degrees
+    const half = (i % 2 === 0 ? 3.0 : 1.8) + (back ? 0.7 : 0); // degrees
     const t = Math.tan((half * Math.PI) / 180);
-    const inner = 8;
+    const inner = 9;
     const pts = `${-inner * t},${-inner} ${inner * t},${-inner} ${100 * t},-100 ${-100 * t},-100`;
     return (
       <polygon
@@ -242,14 +242,14 @@ function SunRays() {
     <svg viewBox="-100 -100 200 200" className="block h-full w-full">
       <defs>
         <radialGradient id="sunbeam-front" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="100">
-          <stop offset="0" stopColor="#fff6d6" stopOpacity="0.95" />
-          <stop offset="0.5" stopColor="#fff6d6" stopOpacity="0.55" />
-          <stop offset="1" stopColor="#fff6d6" stopOpacity="0" />
+          <stop offset="0" stopColor="#fff7dc" stopOpacity="1" />
+          <stop offset="0.55" stopColor="#fff7dc" stopOpacity="0.6" />
+          <stop offset="1" stopColor="#fff7dc" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="sunbeam-back" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="100">
-          <stop offset="0" stopColor="#ffcf6b" stopOpacity="0.9" />
-          <stop offset="0.5" stopColor="#ffd884" stopOpacity="0.45" />
-          <stop offset="1" stopColor="#ffd884" stopOpacity="0" />
+          <stop offset="0" stopColor="#ffc252" stopOpacity="0.9" />
+          <stop offset="0.55" stopColor="#ffcd6e" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#ffcd6e" stopOpacity="0" />
         </radialGradient>
       </defs>
       {Array.from({ length: BEAMS }, (_, i) => beam(i, true))}
@@ -424,7 +424,11 @@ export function PaperSky() {
   const cloudEls = useRef<(HTMLDivElement | null)[]>([]);
   const cover = useMotionValue(0);
   const coverEased = useSpring(cover, { stiffness: 50, damping: 18 });
-  const beamOpacity = useTransform(coverEased, [0, 1], [0.1, 1]);
+  // Hidden in open sky; fades in as a cloud starts to cover the sun and is
+  // full strength by a third covered. A fully hidden layer is also taken
+  // out of rendering.
+  const beamOpacity = useTransform(coverEased, [0.03, 0.33], [0, 0.85]);
+  const beamVisibility = useTransform(beamOpacity, (o) => (o < 0.005 ? "hidden" : "visible"));
   useEffect(() => {
     if (!mounted) return;
     let raf = 0;
@@ -474,7 +478,7 @@ export function PaperSky() {
           {/* The beams share the sun's position, one layer further back. */}
           <motion.div
             className="absolute right-[8vw] top-0 z-[2] h-[clamp(110px,16vw,250px)] w-[clamp(110px,16vw,250px)] will-change-transform"
-            style={{ y: sunY, x: sunX, translateY: "-50%", opacity: beamOpacity }}
+            style={{ y: sunY, x: sunX, translateY: "-50%", opacity: beamOpacity, visibility: beamVisibility }}
           >
             <motion.div
               className="absolute left-1/2 top-1/2 h-[150vmax] w-[150vmax] will-change-transform"
