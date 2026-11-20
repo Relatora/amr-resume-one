@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { motion, useTransform, type MotionValue } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { loadWeather, subscribeWeather, type WeatherNow } from "@/lib/weather";
 import SkyWords from "@/components/paper/SkyWords";
 import { useSmoothScroll, wrap } from "@/components/paper/motion";
@@ -144,11 +144,13 @@ function DriftingCloud({
   index,
   scrollY,
   vh,
+  register,
 }: {
   cloud: (typeof CLOUDS)[number];
   index: number;
   scrollY: MotionValue<number>;
   vh: React.RefObject<number>;
+  register: (el: HTMLDivElement | null) => void;
 }) {
   // Scrolling lifts every cloud at its own depth's pace and pushes the near
   // ones sideways a little, wrapping so the sky never runs out.
@@ -168,12 +170,17 @@ function DriftingCloud({
         x,
         width: `max(${cloud.w}vw, ${Math.round(cloud.w * 9)}px)`,
         opacity: 0.74 + cloud.depth * 0.26,
-        zIndex: Math.round(cloud.depth * 10),
+        // every cloud sits in front of the sun and its beams (see PaperSky)
+        zIndex: 10 + Math.round(cloud.depth * 10),
       }}
     >
       {/* A slow idle sway on top of the scroll motion keeps the sky alive
           while the visitor reads. */}
-      <div className="paper-sway" style={{ animationDuration: `${cloud.sway}s`, animationDelay: `-${index * 7}s` }}>
+      <div
+        ref={register}
+        className="paper-sway"
+        style={{ animationDuration: `${cloud.sway}s`, animationDelay: `-${index * 7}s` }}
+      >
         <CloudShape shape={cloud.shape} />
       </div>
     </motion.div>
@@ -206,6 +213,47 @@ function PaperSun({ rotate }: { rotate: MotionValue<number> }) {
         <circle r="49" fill="url(#paper-sun)" />
         <circle r="43" fill="none" stroke="#dd8a20" strokeWidth="1.6" strokeDasharray="3.2 4.4" strokeLinecap="round" />
       </g>
+    </svg>
+  );
+}
+
+// Sunbeams cut from paper: long tapered strips fanning out from the sun,
+// each a pale front sheet over a slightly wider golden one, fading toward
+// the tip. They sit behind the clouds, so when a cloud crosses the sun the
+// beams shine out around its edges. No blur filter: the layer is several
+// screens wide, and a filter on it would cost far more than flat sheets.
+const BEAMS = 14;
+function SunRays() {
+  const beam = (i: number, back: boolean) => {
+    const half = (i % 2 ? 1.8 : 3.0) + (back ? 0.7 : 0); // degrees
+    const t = Math.tan((half * Math.PI) / 180);
+    const inner = 8;
+    const pts = `${-inner * t},${-inner} ${inner * t},${-inner} ${100 * t},-100 ${-100 * t},-100`;
+    return (
+      <polygon
+        key={`${back ? "b" : "f"}${i}`}
+        points={pts}
+        fill={back ? "url(#sunbeam-back)" : "url(#sunbeam-front)"}
+        transform={`rotate(${(360 / BEAMS) * i + (back ? 0.6 : 0)})`}
+      />
+    );
+  };
+  return (
+    <svg viewBox="-100 -100 200 200" className="block h-full w-full">
+      <defs>
+        <radialGradient id="sunbeam-front" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="100">
+          <stop offset="0" stopColor="#fff6d6" stopOpacity="0.95" />
+          <stop offset="0.5" stopColor="#fff6d6" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff6d6" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="sunbeam-back" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="100">
+          <stop offset="0" stopColor="#ffcf6b" stopOpacity="0.9" />
+          <stop offset="0.5" stopColor="#ffd884" stopOpacity="0.45" />
+          <stop offset="1" stopColor="#ffd884" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      {Array.from({ length: BEAMS }, (_, i) => beam(i, true))}
+      {Array.from({ length: BEAMS }, (_, i) => beam(i, false))}
     </svg>
   );
 }
@@ -262,7 +310,7 @@ function Flock({
     return `${wrap(flock.y - travelled, LOOP_VH) - 25}vh`;
   });
   return (
-    <motion.div className="absolute inset-x-0 top-0 z-[6] will-change-transform" style={{ y }}>
+    <motion.div className="absolute inset-x-0 top-0 z-[15] will-change-transform" style={{ y }}>
       <div
         className="paper-fly absolute left-0 top-0"
         style={{
@@ -318,7 +366,7 @@ function PaperWeather() {
             width: w.snow ? 10 : 9,
             animationDuration: `${(w.snow ? 9 : 4.2) + hash(i + 50) * 3}s`,
             animationDelay: `-${hash(i + 99) * 8}s`,
-            zIndex: 4,
+            zIndex: 30, // rain falls in front of everything
           }}
         >
           {w.snow ? (
@@ -346,9 +394,11 @@ export function PaperSky() {
   // Rendered on the client only: the scroll maths reads the window.
   const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
-  // The sun sits in front of the clouds (z-20 against their 0-9) so they
-// never hide it, least of all as it sets at the bottom of the page.
-// The sun's day: it starts high on the right and sinks along the page,
+  // Layers, back to front: sky words (1), sunbeams (2), the sun (3),
+  // clouds (10-19), birds (15), rain (30). The sun is behind every cloud;
+  // its beams brighten when one covers it, so they shine around the edges.
+  //
+  // The sun's day: it starts high on the right and sinks along the page,
   // arriving just behind the sea at the very bottom. Its rays turn with
   // the scroll, and the sky warms toward sunset over the last stretch.
   const sunY = useTransform(progress, (p) => {
@@ -364,6 +414,47 @@ export function PaperSky() {
   const sunX = useTransform(progress, [0, 1], ["0vw", "-16vw"]);
   const rays = useTransform(scrollY, (s) => s * 0.05);
   const sunset = useTransform(progress, [0.72, 1], [0, 0.6]);
+  const beamTurn = useTransform(scrollY, (s) => -s * 0.012);
+
+  // How much of the sun a cloud covers, 0..1, measured from the elements'
+  // on-screen boxes each frame. Transforms do not trigger layout, so the
+  // reads are cheap. The beams are faint in open sky and shine fully when
+  // the sun is behind a cloud.
+  const sunRef = useRef<HTMLDivElement>(null);
+  const cloudEls = useRef<(HTMLDivElement | null)[]>([]);
+  const cover = useMotionValue(0);
+  const coverEased = useSpring(cover, { stiffness: 50, damping: 18 });
+  const beamOpacity = useTransform(coverEased, [0, 1], [0.1, 1]);
+  useEffect(() => {
+    if (!mounted) return;
+    let raf = 0;
+    const tick = () => {
+      const sun = sunRef.current;
+      if (sun && document.documentElement.classList.contains("light")) {
+        const b = sun.getBoundingClientRect();
+        const r = b.width * 0.25; // the disc, inside the rays
+        const cx = b.left + b.width / 2;
+        const cy = b.top + b.height / 2;
+        let best = 0;
+        for (const el of cloudEls.current) {
+          if (!el) continue;
+          const c = el.getBoundingClientRect();
+          // the cloud's solid body, not its padded box
+          const L = c.left + c.width * 0.08;
+          const R = c.right - c.width * 0.08;
+          const T = c.top + c.height * 0.25;
+          const B = c.bottom - c.height * 0.05;
+          const ox = Math.max(0, Math.min(R, cx + r) - Math.max(L, cx - r));
+          const oy = Math.max(0, Math.min(B, cy + r) - Math.max(T, cy - r));
+          best = Math.max(best, (ox * oy) / (4 * r * r));
+        }
+        cover.set(Math.min(1, best * 1.4));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [mounted, cover]);
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-0 hidden overflow-hidden [.light_&]:block">
@@ -380,8 +471,21 @@ export function PaperSky() {
           <div className="absolute inset-0 z-[1]">
             <SkyWords theme="light" />
           </div>
+          {/* The beams share the sun's position, one layer further back. */}
           <motion.div
-            className="absolute right-[8vw] top-0 z-[20] h-[clamp(110px,16vw,250px)] w-[clamp(110px,16vw,250px)] will-change-transform"
+            className="absolute right-[8vw] top-0 z-[2] h-[clamp(110px,16vw,250px)] w-[clamp(110px,16vw,250px)] will-change-transform"
+            style={{ y: sunY, x: sunX, translateY: "-50%", opacity: beamOpacity }}
+          >
+            <motion.div
+              className="absolute left-1/2 top-1/2 h-[150vmax] w-[150vmax] will-change-transform"
+              style={{ x: "-50%", y: "-50%", rotate: beamTurn }}
+            >
+              <SunRays />
+            </motion.div>
+          </motion.div>
+          <motion.div
+            ref={sunRef}
+            className="absolute right-[8vw] top-0 z-[3] h-[clamp(110px,16vw,250px)] w-[clamp(110px,16vw,250px)] will-change-transform"
             style={{ y: sunY, x: sunX, translateY: "-50%" }}
           >
             <PaperSun rotate={rays} />
@@ -390,7 +494,16 @@ export function PaperSky() {
             <Flock key={i} flock={f} index={i} scrollY={scrollY} vh={vh} />
           ))}
           {CLOUDS.map((c, i) => (
-            <DriftingCloud key={i} cloud={c} index={i} scrollY={scrollY} vh={vh} />
+            <DriftingCloud
+              key={i}
+              cloud={c}
+              index={i}
+              scrollY={scrollY}
+              vh={vh}
+              register={(el) => {
+                cloudEls.current[i] = el;
+              }}
+            />
           ))}
           <PaperWeather />
         </>
