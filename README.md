@@ -61,3 +61,9 @@ The PDFs are generated from the LaTeX master CVs kept in a separate, private job
 ---
 
 Reach me at [relatora@gmail.com](mailto:relatora@gmail.com).
+
+## License
+
+Copyright (c) 2026 Amr Abdallah. All rights reserved.
+
+The source is public to read, not to use. You may view it to evaluate my work, but you may not run, copy, modify, redistribute or train AI models on it. See [LICENSE](LICENSE) for the full terms.
